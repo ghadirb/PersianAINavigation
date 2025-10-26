@@ -48,34 +48,46 @@ class MapFragment : Fragment() {
     }
     
     private fun setupMap(savedInstanceState: Bundle?) {
-        mapView = binding.mapView
-        mapView?.onCreate(savedInstanceState)
-        mapView?.getMapAsync { map ->
-            map.setStyle(Style.Builder().fromUri("https://demotiles.maplibre.org/style.json")) {
-                // تنظیم موقعیت اولیه (تهران)
-                val tehran = LatLng(35.6892, 51.3890)
-                map.cameraPosition = CameraPosition.Builder()
-                    .target(tehran)
-                    .zoom(12.0)
-                    .build()
+        try {
+            mapView = binding.mapView
+            mapView?.onCreate(savedInstanceState)
+            mapView?.getMapAsync { map ->
+                try {
+                    map.setStyle(Style.Builder().fromUri("https://demotiles.maplibre.org/style.json")) {
+                        // تنظیم موقعیت اولیه (تهران)
+                        val tehran = LatLng(35.6892, 51.3890)
+                        map.cameraPosition = CameraPosition.Builder()
+                            .target(tehran)
+                            .zoom(12.0)
+                            .build()
+                    }
+                } catch (e: Exception) {
+                    Toast.makeText(requireContext(), "خطا در بارگذاری نقشه: ${e.message}", Toast.LENGTH_LONG).show()
+                }
             }
+        } catch (e: Exception) {
+            Toast.makeText(requireContext(), "خطا در راه‌اندازی نقشه", Toast.LENGTH_SHORT).show()
         }
     }
     
     private fun setupUI() {
-        binding.fabMyLocation.setOnClickListener {
-            Toast.makeText(requireContext(), "رفتن به موقعیت فعلی", Toast.LENGTH_SHORT).show()
-            // TODO: Implement current location
-        }
-        
-        binding.btnStartRoute.setOnClickListener {
-            val destination = binding.etDestination.text.toString()
-            if (destination.isNotEmpty()) {
-                Toast.makeText(requireContext(), "شروع مسیریابی به: $destination", Toast.LENGTH_SHORT).show()
-                // TODO: Start navigation with OSRM
-            } else {
-                Toast.makeText(requireContext(), "لطفا مقصد را وارد کنید", Toast.LENGTH_SHORT).show()
+        try {
+            binding.fabMyLocation.setOnClickListener {
+                Toast.makeText(requireContext(), "رفتن به موقعیت فعلی", Toast.LENGTH_SHORT).show()
+                // TODO: Implement current location
             }
+            
+            binding.btnStartRoute.setOnClickListener {
+                val destination = binding.etDestination.text.toString()
+                if (destination.isNotEmpty()) {
+                    Toast.makeText(requireContext(), "شروع مسیریابی به: $destination", Toast.LENGTH_SHORT).show()
+                    // TODO: Start navigation with OSRM
+                } else {
+                    Toast.makeText(requireContext(), "لطفا مقصد را وارد کنید", Toast.LENGTH_SHORT).show()
+                }
+            }
+        } catch (e: Exception) {
+            Toast.makeText(requireContext(), "خطا: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
     
