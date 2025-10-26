@@ -72,6 +72,9 @@ dependencies {
     implementation("androidx.viewpager2:viewpager2:1.0.0")
     implementation("androidx.fragment:fragment-ktx:1.6.2")
     
+    // Google Play Services for Location
+    implementation("com.google.android.gms:play-services-location:21.0.1")
+    
     // MapLibre GL for map display only
     implementation("org.maplibre.gl:android-sdk:11.0.0")
     // Using OSRM API via Retrofit for routing (no SDK conflicts)
