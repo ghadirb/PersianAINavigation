@@ -4,90 +4,23 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import ir.navigation.persian.ai.R
-import org.maplibre.android.camera.CameraPosition
-import org.maplibre.android.geometry.LatLng
-import org.maplibre.android.maps.MapView
-import org.maplibre.android.maps.Style
 
 /**
- * MainActivity - صفحه اصلی (بدون UnlockActivity)
+ * MainActivity - تست ساده
  */
 class MainActivity : AppCompatActivity() {
-    
-    private var mapView: MapView? = null
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
         try {
-            setContentView(R.layout.activity_main_simple)
-            setupMap(savedInstanceState)
-            Toast.makeText(this, "✅ مسیریاب آماده است", Toast.LENGTH_SHORT).show()
+            // فقط یک صفحه ساده - بدون نقشه
+            setContentView(R.layout.activity_test_simple)
+            Toast.makeText(this, "✅ برنامه باز شد", Toast.LENGTH_LONG).show()
         } catch (e: Exception) {
-            // حداقل یک layout ساده نمایش بده
-            try {
-                setContentView(android.R.layout.simple_list_item_1)
-            } catch (e2: Exception) {
-                // ignore
-            }
             Toast.makeText(this, "خطا: ${e.message}", Toast.LENGTH_LONG).show()
-            android.util.Log.e("MainActivity", "Error", e)
+            android.util.Log.e("MainActivity", "Error in onCreate", e)
+            e.printStackTrace()
         }
-    }
-    
-    private fun setupMap(savedInstanceState: Bundle?) {
-        mapView = findViewById(R.id.mapView)
-        mapView?.onCreate(savedInstanceState)
-        mapView?.getMapAsync { map ->
-            try {
-                map.setStyle(Style.Builder().fromUri("https://demotiles.maplibre.org/style.json")) {
-                    // تنظیم موقعیت اولیه (تهران)
-                    val tehran = LatLng(35.6892, 51.3890)
-                    map.cameraPosition = CameraPosition.Builder()
-                        .target(tehran)
-                        .zoom(12.0)
-                        .build()
-                    
-                    Toast.makeText(this, "🗺️ نقشه بارگذاری شد", Toast.LENGTH_SHORT).show()
-                }
-            } catch (e: Exception) {
-                Toast.makeText(this, "خطا در بارگذاری نقشه: ${e.message}", Toast.LENGTH_LONG).show()
-            }
-        }
-    }
-    
-    override fun onStart() {
-        super.onStart()
-        mapView?.onStart()
-    }
-    
-    override fun onResume() {
-        super.onResume()
-        mapView?.onResume()
-    }
-    
-    override fun onPause() {
-        super.onPause()
-        mapView?.onPause()
-    }
-    
-    override fun onStop() {
-        super.onStop()
-        mapView?.onStop()
-    }
-    
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        mapView?.onSaveInstanceState(outState)
-    }
-    
-    override fun onLowMemory() {
-        super.onLowMemory()
-        mapView?.onLowMemory()
-    }
-    
-    override fun onDestroy() {
-        super.onDestroy()
-        mapView?.onDestroy()
     }
 }
