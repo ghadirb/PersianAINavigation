@@ -18,13 +18,20 @@ class MainActivity : AppCompatActivity() {
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_navigation)
         
         try {
+            setContentView(R.layout.activity_main_simple)
             setupMap(savedInstanceState)
-            Toast.makeText(this, "✅ مسیریاب هوشمند آماده است", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "✅ مسیریاب آماده است", Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
+            // حداقل یک layout ساده نمایش بده
+            try {
+                setContentView(android.R.layout.simple_list_item_1)
+            } catch (e2: Exception) {
+                // ignore
+            }
             Toast.makeText(this, "خطا: ${e.message}", Toast.LENGTH_LONG).show()
+            android.util.Log.e("MainActivity", "Error", e)
         }
     }
     
