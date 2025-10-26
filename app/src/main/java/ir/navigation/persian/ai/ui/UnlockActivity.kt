@@ -56,33 +56,42 @@ class UnlockActivity : AppCompatActivity() {
         binding.tvStatus.text = "در حال رمزگشایی..."
         
         lifecycleScope.launch {
-            val success = keyManager.unlockKeys(password)
-            
-            binding.btnUnlock.isEnabled = true
-            binding.progressBar.visibility = android.view.View.GONE
-            
-            if (success) {
-                binding.tvStatus.text = "قفل باز شد! ✓"
-                binding.tvStatus.setTextColor(getColor(android.R.color.holo_green_dark))
+            try {
+                val success = keyManager.unlockKeys(password)
                 
-                val modelName = keyManager.getActiveModelName()
-                val keyCount = keyManager.getKeyCount()
+                binding.btnUnlock.isEnabled = true
+                binding.progressBar.visibility = android.view.View.GONE
                 
-                Toast.makeText(
-                    this@UnlockActivity,
-                    "مدل فعال: $modelName\nتعداد کلیدها: $keyCount",
-                    Toast.LENGTH_LONG
-                ).show()
-                
-                // انتقال به صفحه اصلی بعد از 1 ثانیه
-                binding.root.postDelayed({
-                    navigateToMain()
-                }, 1000)
-                
-            } else {
-                binding.tvStatus.text = "رمز اشتباه است یا فایل کلیدها موجود نیست"
+                if (success) {
+                    binding.tvStatus.text = "قفل باز شد! ✓"
+                    binding.tvStatus.setTextColor(getColor(android.R.color.holo_green_dark))
+                    
+                    val modelName = keyManager.getActiveModelName()
+                    val keyCount = keyManager.getKeyCount()
+                    
+                    Toast.makeText(
+                        this@UnlockActivity,
+                        "مدل فعال: $modelName\nتعداد کلیدها: $keyCount",
+                        Toast.LENGTH_LONG
+                    ).show()
+                    
+                    // انتقال به صفحه اصلی بعد از 1 ثانیه
+                    binding.root.postDelayed({
+                        navigateToMain()
+                    }, 1000)
+                    
+                } else {
+                    binding.tvStatus.text = "رمز اشتباه است یا فایل کلیدها موجود نیست"
+                    binding.tvStatus.setTextColor(getColor(android.R.color.holo_red_dark))
+                    Toast.makeText(this@UnlockActivity, "رمزگشایی ناموفق بود", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                binding.btnUnlock.isEnabled = true
+                binding.progressBar.visibility = android.view.View.GONE
+                binding.tvStatus.text = "خطا: ${e.message}"
                 binding.tvStatus.setTextColor(getColor(android.R.color.holo_red_dark))
-                Toast.makeText(this@UnlockActivity, "رمزگشایی ناموفق بود", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@UnlockActivity, "خطا: ${e.message}", Toast.LENGTH_LONG).show()
+                Log.e("UnlockActivity", "Error unlocking keys", e)
             }
         }
     }
