@@ -17,13 +17,14 @@ class MainActivity : AppCompatActivity() {
         val tabLayout = TabLayout(this)
         val viewPager = ViewPager2(this)
         
-        layout.addView(tabLayout, android.widget.LinearLayout.LayoutParams(
-            android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
-            android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
-        ))
+        // ViewPager بالا، TabLayout پایین
         layout.addView(viewPager, android.widget.LinearLayout.LayoutParams(
             android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
             0, 1f
+        ))
+        layout.addView(tabLayout, android.widget.LinearLayout.LayoutParams(
+            android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+            android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
         ))
         
         setContentView(layout)
