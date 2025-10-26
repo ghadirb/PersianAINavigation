@@ -21,3 +21,9 @@ keystore.properties
 *.keystore
 release-keystore.jks
 debug-keystore.jks
+
+# Sensitive information (NEVER commit!)
+TOKENS.txt
+tokens.txt
+secrets.txt
+passwords.txt
