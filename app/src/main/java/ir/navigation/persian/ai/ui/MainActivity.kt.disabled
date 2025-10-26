@@ -1,0 +1,417 @@
+package ir.navigation.persian.ai.ui
+
+import android.Manifest
+import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
+import android.content.ServiceConnection
+import android.content.pm.PackageManager
+import android.location.Location
+import android.os.Bundle
+import android.os.IBinder
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
+// Temporarily disabled - Google Services not configured
+// import com.google.android.gms.auth.api.signin.GoogleSignIn
+// import com.google.android.gms.common.api.ApiException
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import ir.navigation.persian.ai.databinding.ActivityMainBinding
+// import ir.navigation.persian.ai.drive.GoogleDriveManager
+import ir.navigation.persian.ai.model.*
+import ir.navigation.persian.ai.service.NavigationService
+import ir.navigation.persian.ai.crypto.KeyManager
+import ir.navigation.persian.ai.tts.VoiceAlertManager
+import kotlinx.coroutines.launch
+
+class MainActivity : AppCompatActivity() {
+    
+    private lateinit var binding: ActivityMainBinding
+    private lateinit var driveManager: GoogleDriveManager
+    private lateinit var keyManager: KeyManager
+    private lateinit var voiceAlertManager: VoiceAlertManager
+    
+    private var navigationService: NavigationService? = null
+    private var isBound = false
+    private var speedCameras = mutableListOf<SpeedCamera>()
+    
+    private val gson = Gson()
+    
+    private val serviceConnection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+            val binder = service as NavigationService.LocalBinder
+            navigationService = binder.getService()
+            isBound = true
+            
+            setupNavigationListener()
+        }
+        
+        override fun onServiceDisconnected(name: ComponentName?) {
+            isBound = false
+            navigationService = null
+        }
+    }
+    
+    private val locationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val granted = permissions.entries.all { it.value }
+        if (granted) {
+            Toast.makeText(this, "مجوزها اعطا شد", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(this, "برای استفاده از برنامه، مجوزها الزامی است", Toast.LENGTH_LONG).show()
+        }
+    }
+    
+    private val googleSignInLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+            try {
+                val account = task.getResult(ApiException::class.java)
+                lifecycleScope.launch {
+                    val success = driveManager.setupDriveService(account)
+                    if (success) {
+                        Toast.makeText(
+                            this@MainActivity,
+                            "ورود موفق به Google Drive",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        syncWithDrive()
+                    }
+                }
+            } catch (e: ApiException) {
+                Toast.makeText(this, "ورود ناموفق: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+    
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+        
+        driveManager = GoogleDriveManager(this)
+        driveManager.initializeSignIn()
+        
+        keyManager = KeyManager(this)
+        voiceAlertManager = VoiceAlertManager(this)
+        
+        // مقداردهی Voice Alert Manager
+        lifecycleScope.launch {
+            voiceAlertManager.initialize()
+        }
+        
+        setupUI()
+        requestPermissions()
+        loadSpeedCameras()
+        updateKeyStatus()
+    }
+    
+    private fun setupUI() {
+        binding.btnStartNavigation.setOnClickListener {
+            val startLat = binding.etStartLat.text.toString().toDoubleOrNull()
+            val startLon = binding.etStartLon.text.toString().toDoubleOrNull()
+            val endLat = binding.etEndLat.text.toString().toDoubleOrNull()
+            val endLon = binding.etEndLon.text.toString().toDoubleOrNull()
+            
+            if (startLat != null && startLon != null && endLat != null && endLon != null) {
+                startNavigation(startLat, startLon, endLat, endLon)
+            } else {
+                Toast.makeText(this, "لطفا مختصات را وارد کنید", Toast.LENGTH_SHORT).show()
+            }
+        }
+        
+        binding.btnStopNavigation.setOnClickListener {
+            stopNavigation()
+        }
+        
+        binding.btnGoogleSignIn.setOnClickListener {
+            signInToGoogleDrive()
+        }
+        
+        binding.btnSyncData.setOnClickListener {
+            lifecycleScope.launch {
+                syncWithDrive()
+            }
+        }
+        
+        binding.btnAddCamera.setOnClickListener {
+            showAddCameraDialog()
+        }
+        
+        binding.btnOpenMap.setOnClickListener {
+            openNavigationActivity()
+        }
+        
+        binding.btnOpenAIChat.setOnClickListener {
+            openAIChatActivity()
+        }
+        
+        binding.btnRefreshKeys.setOnClickListener {
+            refreshKeys()
+        }
+        
+        binding.switchVoiceAlerts.setOnCheckedChangeListener { _, isChecked ->
+            voiceAlertManager.setMuted(!isChecked)
+            Toast.makeText(this, 
+                if (isChecked) "هشدارهای صوتی فعال" else "هشدارهای صوتی غیرفعال",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+        
+        // بررسی وضعیت ورود
+        updateSignInStatus()
+    }
+    
+    private fun requestPermissions() {
+        val permissions = mutableListOf(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.RECORD_AUDIO
+        )
+        
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            permissions.add(Manifest.permission.POST_NOTIFICATIONS)
+        }
+        
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            permissions.add(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+        }
+        
+        val needsPermission = permissions.any {
+            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
+        }
+        
+        if (needsPermission) {
+            locationPermissionLauncher.launch(permissions.toTypedArray())
+        }
+    }
+    
+    private fun startNavigation(startLat: Double, startLon: Double, endLat: Double, endLon: Double) {
+        if (!isBound) {
+            val intent = Intent(this, NavigationService::class.java)
+            bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
+            startService(intent)
+        }
+        
+        navigationService?.startNavigation(startLat, startLon, endLat, endLon, speedCameras)
+        
+        binding.tvStatus.text = "مسیریابی فعال است"
+        Toast.makeText(this, "مسیریابی شروع شد", Toast.LENGTH_SHORT).show()
+    }
+    
+    private fun stopNavigation() {
+        navigationService?.stopNavigation()
+        if (isBound) {
+            unbindService(serviceConnection)
+            isBound = false
+        }
+        
+        binding.tvStatus.text = "مسیریابی غیرفعال"
+        Toast.makeText(this, "مسیریابی متوقف شد", Toast.LENGTH_SHORT).show()
+    }
+    
+    private fun setupNavigationListener() {
+        navigationService?.setNavigationListener(object : NavigationService.NavigationListener {
+            override fun onLocationUpdate(location: Location) {
+                runOnUiThread {
+                    binding.tvCurrentLocation.text = 
+                        "موقعیت فعلی: ${location.latitude}, ${location.longitude}\n" +
+                        "سرعت: ${(location.speed * 3.6).toInt()} km/h"
+                }
+            }
+            
+            override fun onCameraAlert(camera: SpeedCamera, distance: Int) {
+                runOnUiThread {
+                    binding.tvAlert.text = "هشدار دوربین در ${distance} متری - سرعت مجاز: ${camera.speedLimit}"
+                }
+            }
+            
+            override fun onSpeedBumpAlert(distance: Int) {
+                runOnUiThread {
+                    binding.tvAlert.text = "هشدار سرعت‌گیر در ${distance} متری"
+                }
+            }
+            
+            override fun onSpeedLimitExceeded(currentSpeed: Int, speedLimit: Int) {
+                runOnUiThread {
+                    binding.tvAlert.text = "تخطی از سرعت! سرعت فعلی: $currentSpeed - مجاز: $speedLimit"
+                }
+            }
+            
+            override fun onRoutePredicted(prediction: RoutePrediction) {
+                runOnUiThread {
+                    val message = "مسیرهای پیشنهادی:\n" + 
+                        prediction.routes.joinToString("\n") { 
+                            "• ${it.reason} (${it.estimatedTime / 60000} دقیقه)"
+                        }
+                    binding.tvPrediction.text = message
+                }
+            }
+        })
+    }
+    
+    private fun signInToGoogleDrive() {
+        val signInIntent = driveManager.getSignInIntent()
+        signInIntent?.let {
+            googleSignInLauncher.launch(it)
+        }
+    }
+    
+    private suspend fun syncWithDrive() {
+        if (!driveManager.isSignedIn()) {
+            Toast.makeText(this, "لطفا ابتدا وارد حساب Google شوید", Toast.LENGTH_SHORT).show()
+            return
+        }
+        
+        binding.tvStatus.text = "در حال همگام‌سازی..."
+        
+        // دانلود داده‌های دوربین
+        val cameraData = driveManager.downloadCameraData()
+        cameraData?.let {
+            importCameras(it)
+        }
+        
+        // همگام‌سازی داده‌های یادگیری
+        // این بخش باید با RouteLearningEngine هماهنگ شود
+        
+        binding.tvStatus.text = "همگام‌سازی کامل شد"
+        Toast.makeText(this, "داده‌ها همگام‌سازی شدند", Toast.LENGTH_SHORT).show()
+    }
+    
+    private fun loadSpeedCameras() {
+        // بارگذاری دوربین‌های ذخیره شده محلی
+        val prefs = getSharedPreferences("navigation_prefs", Context.MODE_PRIVATE)
+        val camerasJson = prefs.getString("speed_cameras", null)
+        
+        camerasJson?.let {
+            try {
+                val type = object : TypeToken<List<SpeedCamera>>() {}.type
+                val cameras: List<SpeedCamera> = gson.fromJson(it, type)
+                speedCameras.clear()
+                speedCameras.addAll(cameras)
+                
+                binding.tvCameraCount.text = "تعداد دوربین‌ها: ${speedCameras.size}"
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+    
+    private fun saveCameras() {
+        val prefs = getSharedPreferences("navigation_prefs", Context.MODE_PRIVATE)
+        val json = gson.toJson(speedCameras)
+        prefs.edit().putString("speed_cameras", json).apply()
+        
+        // آپلود به Drive
+        if (driveManager.isSignedIn()) {
+            lifecycleScope.launch {
+                driveManager.uploadCameraData(json)
+            }
+        }
+    }
+    
+    private fun importCameras(json: String) {
+        try {
+            val type = object : TypeToken<List<SpeedCamera>>() {}.type
+            val importedCameras: List<SpeedCamera> = gson.fromJson(json, type)
+            
+            // ادغام با دوربین‌های موجود
+            val cameraMap = speedCameras.associateBy { it.id }.toMutableMap()
+            importedCameras.forEach { camera ->
+                cameraMap[camera.id] = camera
+            }
+            
+            speedCameras.clear()
+            speedCameras.addAll(cameraMap.values)
+            
+            saveCameras()
+            binding.tvCameraCount.text = "تعداد دوربین‌ها: ${speedCameras.size}"
+            
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+    
+    private fun showAddCameraDialog() {
+        val dialogView = layoutInflater.inflate(ir.navigation.persian.ai.R.layout.dialog_add_camera, null)
+        
+        MaterialAlertDialogBuilder(this)
+            .setTitle("افزودن دوربین/سرعت‌گیر")
+            .setView(dialogView)
+            .setPositiveButton("افزودن") { dialog, _ ->
+                // دریافت اطلاعات از dialog و افزودن دوربین
+                dialog.dismiss()
+            }
+            .setNegativeButton("لغو", null)
+            .show()
+    }
+    
+    private fun openNavigationActivity() {
+        val intent = Intent(this, NavigationActivity::class.java)
+        startActivity(intent)
+    }
+    
+    private fun updateSignInStatus() {
+        if (driveManager.isSignedIn()) {
+            binding.btnGoogleSignIn.text = "خروج از حساب Google"
+            binding.btnGoogleSignIn.setOnClickListener {
+                lifecycleScope.launch {
+                    driveManager.signOut()
+                    updateSignInStatus()
+                }
+            }
+        } else {
+            binding.btnGoogleSignIn.text = "ورود به Google Drive"
+            binding.btnGoogleSignIn.setOnClickListener {
+                signInToGoogleDrive()
+            }
+        }
+    }
+    
+    private fun openAIChatActivity() {
+        if (keyManager.isLocked()) {
+            Toast.makeText(this, "لطفا ابتدا کلیدهای API را فعال کنید", Toast.LENGTH_LONG).show()
+            return
+        }
+        
+        val intent = Intent(this, AIChatActivity::class.java)
+        startActivity(intent)
+    }
+    
+    private fun refreshKeys() {
+        binding.tvKeyStatus.text = "در حال بروزرسانی کلیدها..."
+        
+        lifecycleScope.launch {
+            val success = keyManager.refreshKeys()
+            if (success) {
+                Toast.makeText(this@MainActivity, "کلیدها بروزرسانی شدند. لطفا دوباره رمز را وارد کنید", Toast.LENGTH_LONG).show()
+            } else {
+                Toast.makeText(this@MainActivity, "خطا در بروزرسانی کلیدها", Toast.LENGTH_SHORT).show()
+            }
+            updateKeyStatus()
+        }
+    }
+    
+    private fun updateKeyStatus() {
+        val modelName = keyManager.getActiveModelName()
+        val keyCount = keyManager.getKeyCount()
+        val currentKey = keyManager.getCurrentKeyIndex() + 1
+        
+        binding.tvKeyStatus.text = "مدل: $modelName | کلید: $currentKey/$keyCount"
+    }
+    
+    override fun onDestroy() {
+        super.onDestroy()
+        if (isBound) {
+            unbindService(serviceConnection)
+        }
+        voiceAlertManager.release()
+    }
+}
