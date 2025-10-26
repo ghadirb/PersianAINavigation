@@ -10,7 +10,7 @@ class TabsAdapter(activity: FragmentActivity) : FragmentStateAdapter(activity) {
     
     override fun createFragment(position: Int): Fragment {
         return when (position) {
-            0 -> MapFragmentComplete()
+            0 -> MapFragment()
             1 -> SavedFragment()
             2 -> SearchFragment()
             3 -> ChatFragment()
