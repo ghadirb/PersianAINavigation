@@ -1,26 +1,55 @@
 package ir.navigation.persian.ai.ui
 
 import android.os.Bundle
-import android.widget.Button
-import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import ir.navigation.persian.ai.R
+import androidx.fragment.app.Fragment
+import com.google.android.material.tabs.TabLayoutMediator
+import ir.navigation.persian.ai.databinding.ActivityMainTabbedBinding
+import ir.navigation.persian.ai.ui.adapters.ViewPagerAdapter
+import ir.navigation.persian.ai.ui.fragments.AIChatFragment
+import ir.navigation.persian.ai.ui.fragments.MapFragment
+import ir.navigation.persian.ai.ui.fragments.SavedPlacesFragment
+import ir.navigation.persian.ai.ui.fragments.SettingsFragment
 
 /**
- * MainActivity ساده برای تست Build
- * این فایل موقتی است و بعداً با نسخه کامل جایگزین می‌شود
+ * MainActivity با TabLayout - رابط کاربری مدرن
  */
 class MainActivity : AppCompatActivity() {
     
+    private lateinit var binding: ActivityMainTabbedBinding
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        binding = ActivityMainTabbedBinding.inflate(layoutInflater)
+        setContentView(binding.root)
         
-        // TODO: Implement full navigation features after successful build
-        // Features to restore:
-        // - Google Drive integration
-        // - AI Chat system
-        // - Voice alerts
-        // - Navigation with OSRM
+        setupTabs()
+    }
+    
+    private fun setupTabs() {
+        // لیست Fragment ها
+        val fragments = listOf<Fragment>(
+            MapFragment(),
+            SavedPlacesFragment(),
+            AIChatFragment(),
+            SettingsFragment()
+        )
+        
+        // نام Tab ها
+        val tabTitles = listOf(
+            "🗺️ نقشه",
+            "📍 ذخیره‌ها",
+            "🤖 چت AI",
+            "⚙️ تنظیمات"
+        )
+        
+        // تنظیم ViewPager2
+        val adapter = ViewPagerAdapter(this, fragments)
+        binding.viewPager.adapter = adapter
+        
+        // اتصال TabLayout به ViewPager2
+        TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, position ->
+            tab.text = tabTitles[position]
+        }.attach()
     }
 }
