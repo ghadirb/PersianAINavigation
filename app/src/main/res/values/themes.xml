@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.PersianAINavigation" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">#6200EE</item>
+    </style>
+    <style name="Theme.PersianAINavigation.FullScreen" parent="Theme.PersianAINavigation">
+        <item name="android:windowFullscreen">true</item>
+    </style>
+</resources>

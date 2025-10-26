@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">مسیریاب هوشمند فارسی</string>
+    <string name="navigation_title">مسیریابی</string>
+    <string name="settings_title">تنظیمات</string>
+    
+    <string-array name="camera_types">
+        <item>دوربین ثابت</item>
+        <item>دوربین سیار</item>
+        <item>سرعت‌گیر</item>
+        <item>چراغ راهنمایی</item>
+        <item>دوربین میانگین سرعت</item>
+    </string-array>
+</resources>
