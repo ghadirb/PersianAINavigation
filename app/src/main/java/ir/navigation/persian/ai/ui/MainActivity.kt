@@ -23,12 +23,16 @@ import ir.navigation.persian.ai.databinding.ActivityMainBinding
 import ir.navigation.persian.ai.drive.GoogleDriveManager
 import ir.navigation.persian.ai.model.*
 import ir.navigation.persian.ai.service.NavigationService
+import ir.navigation.persian.ai.crypto.KeyManager
+import ir.navigation.persian.ai.tts.VoiceAlertManager
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
     
     private lateinit var binding: ActivityMainBinding
     private lateinit var driveManager: GoogleDriveManager
+    private lateinit var keyManager: KeyManager
+    private lateinit var voiceAlertManager: VoiceAlertManager
     
     private var navigationService: NavigationService? = null
     private var isBound = false
@@ -94,9 +98,18 @@ class MainActivity : AppCompatActivity() {
         driveManager = GoogleDriveManager(this)
         driveManager.initializeSignIn()
         
+        keyManager = KeyManager(this)
+        voiceAlertManager = VoiceAlertManager(this)
+        
+        // مقداردهی Voice Alert Manager
+        lifecycleScope.launch {
+            voiceAlertManager.initialize()
+        }
+        
         setupUI()
         requestPermissions()
         loadSpeedCameras()
+        updateKeyStatus()
     }
     
     private fun setupUI() {
@@ -133,6 +146,22 @@ class MainActivity : AppCompatActivity() {
         
         binding.btnOpenMap.setOnClickListener {
             openNavigationActivity()
+        }
+        
+        binding.btnOpenAIChat.setOnClickListener {
+            openAIChatActivity()
+        }
+        
+        binding.btnRefreshKeys.setOnClickListener {
+            refreshKeys()
+        }
+        
+        binding.switchVoiceAlerts.setOnCheckedChangeListener { _, isChecked ->
+            voiceAlertManager.setMuted(!isChecked)
+            Toast.makeText(this, 
+                if (isChecked) "هشدارهای صوتی فعال" else "هشدارهای صوتی غیرفعال",
+                Toast.LENGTH_SHORT
+            ).show()
         }
         
         // بررسی وضعیت ورود
@@ -345,10 +374,43 @@ class MainActivity : AppCompatActivity() {
         }
     }
     
+    private fun openAIChatActivity() {
+        if (keyManager.isLocked()) {
+            Toast.makeText(this, "لطفا ابتدا کلیدهای API را فعال کنید", Toast.LENGTH_LONG).show()
+            return
+        }
+        
+        val intent = Intent(this, AIChatActivity::class.java)
+        startActivity(intent)
+    }
+    
+    private fun refreshKeys() {
+        binding.tvKeyStatus.text = "در حال بروزرسانی کلیدها..."
+        
+        lifecycleScope.launch {
+            val success = keyManager.refreshKeys()
+            if (success) {
+                Toast.makeText(this@MainActivity, "کلیدها بروزرسانی شدند. لطفا دوباره رمز را وارد کنید", Toast.LENGTH_LONG).show()
+            } else {
+                Toast.makeText(this@MainActivity, "خطا در بروزرسانی کلیدها", Toast.LENGTH_SHORT).show()
+            }
+            updateKeyStatus()
+        }
+    }
+    
+    private fun updateKeyStatus() {
+        val modelName = keyManager.getActiveModelName()
+        val keyCount = keyManager.getKeyCount()
+        val currentKey = keyManager.getCurrentKeyIndex() + 1
+        
+        binding.tvKeyStatus.text = "مدل: $modelName | کلید: $currentKey/$keyCount"
+    }
+    
     override fun onDestroy() {
         super.onDestroy()
         if (isBound) {
             unbindService(serviceConnection)
         }
+        voiceAlertManager.release()
     }
 }

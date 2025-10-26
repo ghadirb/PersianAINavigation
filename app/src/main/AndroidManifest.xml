@@ -35,17 +35,31 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
         
-        <!-- Main Activity -->
+        <!-- Unlock Activity (Splash/Login) -->
         <activity
-            android:name=".ui.MainActivity"
+            android:name=".ui.UnlockActivity"
             android:exported="true"
             android:screenOrientation="portrait"
-            android:windowSoftInputMode="adjustResize">
+            android:theme="@style/Theme.PersianAINavigation">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        
+        <!-- Main Activity -->
+        <activity
+            android:name=".ui.MainActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustResize" />
+        
+        <!-- AI Chat Activity -->
+        <activity
+            android:name=".ui.AIChatActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustResize" />
         
         <!-- Navigation Activity -->
         <activity

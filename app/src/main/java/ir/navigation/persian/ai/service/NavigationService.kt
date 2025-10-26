@@ -12,6 +12,7 @@ import com.google.android.gms.location.*
 import ir.navigation.persian.ai.R
 import ir.navigation.persian.ai.model.*
 import ir.navigation.persian.ai.tts.PersianTTSEngine
+import ir.navigation.persian.ai.tts.VoiceAlertManager
 import ir.navigation.persian.ai.ml.RouteLearningEngine
 import kotlinx.coroutines.*
 import kotlin.math.*
@@ -28,6 +29,7 @@ class NavigationService : Service() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
     private lateinit var ttsEngine: PersianTTSEngine
+    private lateinit var voiceAlertManager: VoiceAlertManager
     private lateinit var routeLearningEngine: RouteLearningEngine
     
     private var currentLocation: Location? = null
@@ -56,10 +58,12 @@ class NavigationService : Service() {
         
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         ttsEngine = PersianTTSEngine(this)
+        voiceAlertManager = VoiceAlertManager(this)
         routeLearningEngine = RouteLearningEngine(this)
         
         serviceScope.launch {
             ttsEngine.initialize()
+            voiceAlertManager.initialize()
             routeLearningEngine.initialize()
         }
         
@@ -390,6 +394,7 @@ class NavigationService : Service() {
         super.onDestroy()
         serviceJob.cancel()
         ttsEngine.release()
+        voiceAlertManager.release()
         routeLearningEngine.release()
     }
     

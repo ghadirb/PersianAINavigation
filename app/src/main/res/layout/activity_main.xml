@@ -146,6 +146,14 @@
             android:layout_marginBottom="8dp"
             style="@style/Widget.Material3.Button.TonalButton" />
 
+        <Button
+            android:id="@+id/btnOpenAIChat"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="چت با AI"
+            android:layout_marginBottom="8dp"
+            style="@style/Widget.Material3.Button.TonalButton" />
+
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -245,6 +253,68 @@
                     android:text="تعداد دوربین‌ها: 0"
                     android:textSize="12sp"
                     android:layout_marginTop="8dp" />
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:cardElevation="4dp"
+            app:cardCornerRadius="8dp"
+            app:cardBackgroundColor="#FFF3E0">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="تنظیمات هوش مصنوعی"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="8dp" />
+
+                <TextView
+                    android:id="@+id/tvKeyStatus"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="مدل: قفل شده | کلید: 0/0"
+                    android:textSize="12sp"
+                    android:layout_marginBottom="8dp" />
+
+                <Button
+                    android:id="@+id/btnRefreshKeys"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="بروزرسانی کلیدها"
+                    android:layout_marginBottom="8dp"
+                    style="@style/Widget.Material3.Button.OutlinedButton" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="هشدارهای صوتی"
+                        android:textSize="14sp" />
+
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchVoiceAlerts"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:checked="true" />
+
+                </LinearLayout>
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
