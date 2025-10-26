@@ -2,7 +2,6 @@ package ir.navigation.persian.ai.ui
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import org.maplibre.android.Maplibre
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.MapView
@@ -21,8 +20,7 @@ class NavigationActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // مقداردهی MapLibre
-        Maplibre.getInstance(this)
+        // MapLibre GL نیازی به initialization ندارد
         
         binding = ActivityNavigationBinding.inflate(layoutInflater)
         setContentView(binding.root)
