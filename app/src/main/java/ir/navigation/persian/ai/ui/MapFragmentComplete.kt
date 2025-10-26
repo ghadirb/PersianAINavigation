@@ -23,8 +23,6 @@ import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.Style
 import org.maplibre.android.annotations.MarkerOptions
-import org.maplibre.android.annotations.PolylineOptions
-import org.maplibre.android.plugins.annotation.LineManager
 import java.util.Locale
 
 class MapFragmentComplete : Fragment() {
