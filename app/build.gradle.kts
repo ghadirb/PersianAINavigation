@@ -1,7 +1,8 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("com.google.gms.google-services")
+    // Temporarily disabled until google-services.json is configured
+    // id("com.google.gms.google-services")
 }
 
 android {
@@ -88,11 +89,11 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
     
-    // Google Drive API
-    implementation("com.google.android.gms:play-services-auth:20.7.0")
-    implementation("com.google.apis:google-api-services-drive:v3-rev20220815-2.0.0")
-    implementation("com.google.api-client:google-api-client-android:2.2.0")
-    implementation("com.google.http-client:google-http-client-gson:1.43.3")
+    // Google Drive API (Temporarily disabled - will use direct HTTP instead)
+    // implementation("com.google.android.gms:play-services-auth:20.7.0")
+    // implementation("com.google.apis:google-api-services-drive:v3-rev20220815-2.0.0")
+    // implementation("com.google.api-client:google-api-client-android:2.2.0")
+    // implementation("com.google.http-client:google-http-client-gson:1.43.3")
     
     // ML/AI - TensorFlow Lite & ONNX Runtime
     implementation("org.tensorflow:tensorflow-lite:2.14.0")
