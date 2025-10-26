@@ -1,7 +1,34 @@
 workflows:
-  android-workflow:
-    name: Persian AI Navigation
+  android-debug-workflow:
+    name: Persian AI Navigation (Debug)
     max_build_duration: 60
+    environment:
+      vars:
+        PACKAGE_NAME: "ir.navigation.persian.ai"
+      java: 17
+    scripts:
+      - name: Set up local properties
+        script: |
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/local.properties"
+      - name: Build Android Debug
+        script: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --stacktrace
+    artifacts:
+      - app/build/outputs/**/*.apk
+      - app/build/outputs/**/*.aab
+    publishing:
+      email:
+        recipients:
+          - user@example.com
+        notify:
+          success: true
+          failure: true
+  
+  android-release-workflow:
+    name: Persian AI Navigation (Release - Signed)
+    max_build_duration: 60
+    instance_type: mac_mini_m1
     environment:
       android_signing:
         - keystore_reference
@@ -10,12 +37,23 @@ workflows:
       vars:
         PACKAGE_NAME: "ir.navigation.persian.ai"
       java: 17
+    triggering:
+      events:
+        - tag
+      tag_patterns:
+        - pattern: 'v*.*.*'
+          include: true
     scripts:
-      - name: Build Android
+      - name: Set up local properties
         script: |
-          ./gradlew assembleRelease
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/local.properties"
+      - name: Build Android Release
+        script: |
+          chmod +x gradlew
+          ./gradlew assembleRelease bundleRelease --stacktrace
     artifacts:
       - app/build/outputs/**/*.apk
+      - app/build/outputs/**/*.aab
     publishing:
       google_play:
         credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS

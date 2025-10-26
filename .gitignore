@@ -14,3 +14,10 @@
 bin/
 gen/
 out/
+
+# Keystore files (IMPORTANT: Never commit these!)
+keystore.properties
+*.jks
+*.keystore
+release-keystore.jks
+debug-keystore.jks
