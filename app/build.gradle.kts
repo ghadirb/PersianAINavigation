@@ -74,9 +74,10 @@ dependencies {
     implementation("org.maplibre.navigation:navigation-core:5.0.0-pre10")
     implementation("org.maplibre.navigation:navigation-ui-android:5.0.0-pre10")
     
-    // GraphHopper Core for routing
-    implementation("com.graphhopper:graphhopper-core:7.0")
-    implementation("com.graphhopper:graphhopper-reader-osm:7.0")
+    // GraphHopper Core for routing (Temporarily commented for build)
+    // TODO: Add GraphHopper when needed or use alternative routing
+    // implementation("com.graphhopper:graphhopper-core:5.3")
+    // implementation("com.graphhopper:graphhopper-reader-osm:5.3")
     
     // Location Services
     implementation("com.google.android.gms:play-services-location:21.1.0")
