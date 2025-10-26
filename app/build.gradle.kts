@@ -70,10 +70,9 @@ dependencies {
     implementation("com.google.android.material:material:1.11.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     
-    // MapLibre Navigation
+    // MapLibre GL for map display only
     implementation("org.maplibre.gl:android-sdk:11.0.0")
-    implementation("org.maplibre.navigation:navigation-core:5.0.0-pre10")
-    implementation("org.maplibre.navigation:navigation-ui-android:5.0.0-pre10")
+    // Using OSRM API via Retrofit for routing (no SDK conflicts)
     
     // GraphHopper Core for routing (Temporarily commented for build)
     // TODO: Add GraphHopper when needed or use alternative routing
