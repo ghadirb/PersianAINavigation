@@ -2,11 +2,11 @@ package ir.navigation.persian.ai.ui
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import com.mapbox.mapboxsdk.Mapbox
-import com.mapbox.mapboxsdk.camera.CameraPosition
-import com.mapbox.mapboxsdk.geometry.LatLng
-import com.mapbox.mapboxsdk.maps.MapView
-import com.mapbox.mapboxsdk.maps.Style
+import org.maplibre.android.Maplibre
+import org.maplibre.android.camera.CameraPosition
+import org.maplibre.android.geometry.LatLng
+import org.maplibre.android.maps.MapView
+import org.maplibre.android.maps.Style
 import ir.navigation.persian.ai.R
 import ir.navigation.persian.ai.databinding.ActivityNavigationBinding
 
@@ -22,7 +22,7 @@ class NavigationActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         
         // مقداردهی MapLibre
-        Mapbox.getInstance(this)
+        Maplibre.getInstance(this)
         
         binding = ActivityNavigationBinding.inflate(layoutInflater)
         setContentView(binding.root)
