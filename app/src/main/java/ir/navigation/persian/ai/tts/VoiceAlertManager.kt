@@ -34,7 +34,7 @@ class VoiceAlertManager(private val context: Context) {
             
             // هشدار شروع (مانند نشان)
             if (isInitialized) {
-                speak("سیستم هشدار صوتی فعال شد. آماده مسیریابی")
+                playAlert("سیستم هشدار صوتی فعال شد. آماده مسیریابی")
             }
         }
     }
