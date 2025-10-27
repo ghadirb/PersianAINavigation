@@ -282,7 +282,7 @@ class MainActivityComplete : AppCompatActivity() {
                 lifecycleScope.launch {
                     try {
                         val results = nominatimAPI.search(query, 5)
-                        resultText.text = results.joinToString("\n\n") { "📍 ${it.name}\n${it.lat}, ${it.lon}" }
+                        resultText.text = results.joinToString("\n\n") { "📍 ${it.displayName}\n${it.lat}, ${it.lon}" }
                         tts?.speak("${results.size} نتیجه یافت شد", TextToSpeech.QUEUE_FLUSH, null, null)
                     } catch (e: Exception) {
                         resultText.text = "خطا: ${e.message}"

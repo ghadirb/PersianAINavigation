@@ -323,7 +323,7 @@ class MainActivityFull : AppCompatActivity() {
                             placeCard.setBackgroundColor(0xFFEEEEEE.toInt())
                             
                             val placeName = TextView(this@MainActivityFull)
-                            placeName.text = "📍 ${place.name}"
+                            placeName.text = "📍 ${place.displayName}"
                             placeName.textSize = 18f
                             placeCard.addView(placeName)
                             
@@ -339,21 +339,21 @@ class MainActivityFull : AppCompatActivity() {
                             btnShow.text = "نمایش"
                             btnShow.setOnClickListener {
                                 tabLayout.selectTab(tabLayout.getTabAt(0))
-                                showLocationOnMap(LatLng(place.lat.toDouble(), place.lon.toDouble()), place.name)
+                                showLocationOnMap(LatLng(place.lat.toDouble(), place.lon.toDouble()), place.displayName)
                             }
                             buttonLayout.addView(btnShow)
                             
                             val btnRoute = Button(this@MainActivityFull)
                             btnRoute.text = "مسیریابی"
                             btnRoute.setOnClickListener {
-                                showRouteOptions(LatLng(place.lat.toDouble(), place.lon.toDouble()), place.name)
+                                showRouteOptions(LatLng(place.lat.toDouble(), place.lon.toDouble()), place.displayName)
                             }
                             buttonLayout.addView(btnRoute)
                             
                             val btnSave = Button(this@MainActivityFull)
                             btnSave.text = "ذخیره"
                             btnSave.setOnClickListener {
-                                database.addPlace(place.name, place.lat.toDouble(), place.lon.toDouble())
+                                database.addPlace(place.displayName, place.lat.toDouble(), place.lon.toDouble())
                                 Toast.makeText(this@MainActivityFull, "✅ ذخیره شد", Toast.LENGTH_SHORT).show()
                             }
                             buttonLayout.addView(btnSave)
