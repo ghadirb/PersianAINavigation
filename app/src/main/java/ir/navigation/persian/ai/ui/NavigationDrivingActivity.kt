@@ -14,6 +14,7 @@ import ir.navigation.persian.ai.api.OSMRAPI
 import ir.navigation.persian.ai.ml.AIRouteLearning
 import ir.navigation.persian.ai.data.CameraData
 import ir.navigation.persian.ai.model.CameraType
+import ir.navigation.persian.ai.tts.VoiceAlertManager
 import kotlinx.coroutines.launch
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.geometry.LatLng
@@ -32,7 +33,11 @@ class NavigationDrivingActivity : AppCompatActivity() {
     private var tts: TextToSpeech? = null
     private val osmrAPI = OSMRAPI()
     private lateinit var aiLearning: AIRouteLearning
+    private lateinit var voiceAlert: VoiceAlertManager
     private var currentRoute: OSMRAPI.RouteInfo? = null
+    private var lastCameraAlertTime = 0L
+    private var lastSpeedAlertTime = 0L
+    private var currentSpeedLimit = 80
     private var currentStepIndex = 0
     private var isNavigating = false
     
@@ -53,6 +58,11 @@ class NavigationDrivingActivity : AppCompatActivity() {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         tts = TextToSpeech(this) { if (it == TextToSpeech.SUCCESS) tts?.language = Locale("fa", "IR") }
         aiLearning = AIRouteLearning(this)
+        voiceAlert = VoiceAlertManager(this)
+        lifecycleScope.launch { 
+            voiceAlert.initialize()
+            voiceAlert.playAlert("سیستم هشدار صوتی فعال شد")
+        }
         aiLearning.startRecording(intent.getDoubleExtra("startLat", 0.0), intent.getDoubleExtra("startLon", 0.0), destLat, destLon)
         
         setupUI(destLat, destLon, destName)
@@ -154,7 +164,7 @@ class NavigationDrivingActivity : AppCompatActivity() {
                         if (routes.isNotEmpty()) {
                             currentRoute = routes[0]
                             isNavigating = true
-                            speak("مسیریابی آغاز شد")
+                            voiceAlert.playAlert("مسیریابی آغاز شد. مسافت ${(routes[0].distance/1000).toInt()} کیلومتر")
                             startLocationUpdates()
                             startVoiceGuidance()
                         }
@@ -186,26 +196,73 @@ class NavigationDrivingActivity : AppCompatActivity() {
         val speed = location.speed * 3.6 // m/s to km/h
         tvSpeed.text = speed.toInt().toString()
         
-        // Check cameras
+        val currentTime = System.currentTimeMillis()
+        
+        // ✅ بررسی دوربین‌ها و سرعت‌گیرها با VoiceAlert
+        var nearestCamera: Pair<ir.navigation.persian.ai.model.SpeedCamera, Float>? = null
         CameraData.getTehranCameras().forEach { camera ->
             val dist = FloatArray(1)
             Location.distanceBetween(location.latitude, location.longitude, camera.latitude, camera.longitude, dist)
+            
             if (dist[0] < 500) {
-                val msg = when(camera.type) {
-                    CameraType.SPEED_BUMP -> "سرعت‌گیر در ${dist[0].toInt()} متری"
-                    else -> "دوربین در ${dist[0].toInt()} متری - سرعت مجاز ${camera.speedLimit}"
+                if (nearestCamera == null || dist[0] < nearestCamera!!.second) {
+                    nearestCamera = Pair(camera, dist[0])
                 }
-                tvInstruction.text = msg
-                if (dist[0] < 200) speak(msg)
             }
         }
         
-        // Check speed
-        if (speed > 80) {
+        // هشدار نزدیک‌ترین دوربین (هر 10 ثانیه یکبار)
+        nearestCamera?.let { (camera, distance) ->
+            if (currentTime - lastCameraAlertTime > 10000) {
+                when(camera.type) {
+                    CameraType.SPEED_BUMP -> {
+                        voiceAlert.alertSpeedBump(distance.toInt())
+                        tvInstruction.text = "🚨 سرعت‌گیر در ${distance.toInt()} متری"
+                    }
+                    else -> {
+                        voiceAlert.alertSpeedCamera(distance.toInt(), camera.speedLimit, camera.type)
+                        tvInstruction.text = when(camera.type) {
+                            CameraType.FIXED_CAMERA -> "📷 دوربین ثابت در ${distance.toInt()}م - سرعت ${camera.speedLimit}"
+                            CameraType.AVERAGE_SPEED_CAMERA -> "📹 دوربین میانگین در ${distance.toInt()}م - سرعت ${camera.speedLimit}"
+                            CameraType.TRAFFIC_LIGHT -> "🚦 چراغ راهنمایی در ${distance.toInt()}م"
+                            CameraType.MOBILE_CAMERA -> "📱 دوربین سیار احتمالی در ${distance.toInt()}م"
+                            else -> "دوربین در ${distance.toInt()}م"
+                        }
+                        currentSpeedLimit = camera.speedLimit
+                        tvSpeedLimit.text = "محدودیت: ${camera.speedLimit}"
+                    }
+                }
+                lastCameraAlertTime = currentTime
+            }
+        }
+        
+        // ✅ بررسی تخطی از سرعت (هر 5 ثانیه یکبار)
+        if (speed > currentSpeedLimit) {
             tvSpeed.setTextColor(0xFFFF0000.toInt())
-            speak("سرعت شما بیش از حد مجاز است")
+            if (currentTime - lastSpeedAlertTime > 5000) {
+                voiceAlert.alertSpeedLimitViolation(speed.toInt(), currentSpeedLimit)
+                lastSpeedAlertTime = currentTime
+            }
         } else {
             tvSpeed.setTextColor(0xFFFFFFFF.toInt())
+        }
+        
+        // ✅ بررسی نزدیکی به مقصد
+        currentRoute?.let { route ->
+            val destLat = intent.getDoubleExtra("destLat", 0.0)
+            val destLon = intent.getDoubleExtra("destLon", 0.0)
+            val distToDest = FloatArray(1)
+            Location.distanceBetween(location.latitude, location.longitude, destLat, destLon, distToDest)
+            
+            if (distToDest[0] < 1000 && distToDest[0] > 100) {
+                voiceAlert.alertApproachingDestination(distToDest[0].toInt())
+            } else if (distToDest[0] < 50) {
+                voiceAlert.playAlert("شما به مقصد رسیده‌اید")
+                aiLearning.finishRecording(0.9f)
+                isNavigating = false
+                finish()
+                return
+            }
         }
         
         // Update camera
@@ -231,7 +288,7 @@ class NavigationDrivingActivity : AppCompatActivity() {
             }
             
             if (isNavigating) {
-                speak("به مقصد رسیدید")
+                voiceAlert.playAlert("به مقصد رسیدید. مسیریابی پایان یافت")
                 aiLearning.finishRecording(0.9f)
                 finish()
             }
@@ -245,6 +302,7 @@ class NavigationDrivingActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         isNavigating = false
+        voiceAlert.release()
         tts?.stop()
         tts?.shutdown()
         mapView?.onDestroy()

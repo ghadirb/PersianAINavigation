@@ -283,6 +283,13 @@ class VoiceAlertManager(private val context: Context) {
     }
     
     /**
+     * پخش هشدار عمومی (public)
+     */
+    fun playAlert(message: String) {
+        playAlert(message, 1.0f)
+    }
+    
+    /**
      * قطع/وصل صدا
      */
     fun setMuted(muted: Boolean) {
