@@ -60,6 +60,76 @@ class CameraAPI {
     }
     
     /**
+     * دریافت دوربین‌های یک منطقه بزرگ (استان، کشور)
+     * @param bounds مرزهای جغرافیایی [minLat, minLon, maxLat, maxLon]
+     */
+    suspend fun getCamerasInBounds(
+        minLat: Double,
+        minLon: Double,
+        maxLat: Double,
+        maxLon: Double
+    ): List<SpeedCamera> = withContext(Dispatchers.IO) {
+        try {
+            // دریافت تمام دوربین‌ها در محدوده
+            val url = "https://overpass-api.de/api/interpreter?data=" +
+                    "[out:json][timeout:60];" +
+                    "(" +
+                    "  node[\"highway\"=\"speed_camera\"]($minLat,$minLon,$maxLat,$maxLon);" +
+                    "  node[\"traffic_calming\"=\"bump\"]($minLat,$minLon,$maxLat,$maxLon);" +
+                    "  node[\"traffic_calming\"=\"hump\"]($minLat,$minLon,$maxLat,$maxLon);" +
+                    "  node[\"highway\"=\"traffic_signals\"][\"camera\"=\"yes\"]($minLat,$minLon,$maxLat,$maxLon);" +
+                    ");" +
+                    "out body;"
+            
+            val response = URL(url).readText()
+            val json = org.json.JSONObject(response)
+            val elements = json.getJSONArray("elements")
+            
+            val cameras = mutableListOf<SpeedCamera>()
+            for (i in 0 until elements.length()) {
+                val element = elements.getJSONObject(i)
+                val tags = element.optJSONObject("tags")
+                
+                val type = when {
+                    tags?.has("traffic_calming") == true -> CameraType.SPEED_BUMP
+                    tags?.has("traffic_signals") == true -> CameraType.TRAFFIC_LIGHT
+                    tags?.optString("camera:type") == "average_speed" -> CameraType.AVERAGE_SPEED_CAMERA
+                    else -> CameraType.FIXED_CAMERA
+                }
+                
+                cameras.add(
+                    SpeedCamera(
+                        id = "osm_${element.getLong("id")}",
+                        latitude = element.getDouble("lat"),
+                        longitude = element.getDouble("lon"),
+                        type = type,
+                        speedLimit = tags?.optInt("maxspeed", 100) ?: 100,
+                        direction = tags?.optDouble("direction"),
+                        verified = true
+                    )
+                )
+            }
+            
+            cameras
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+    
+    /**
+     * دریافت تمام دوربین‌های ایران
+     * مرزهای ایران: 25-40°N, 44-63°E
+     */
+    suspend fun getAllIranCamerasOnline(): List<SpeedCamera> {
+        return getCamerasInBounds(
+            minLat = 25.0,
+            minLon = 44.0,
+            maxLat = 40.0,
+            maxLon = 63.0
+        )
+    }
+    
+    /**
      * دریافت تمام دوربین‌های ایران از دیتابیس محلی
      * این دیتابیس باید به صورت دوره‌ای آپدیت شود
      */
