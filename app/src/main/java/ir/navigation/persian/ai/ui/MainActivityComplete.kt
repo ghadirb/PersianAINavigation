@@ -36,6 +36,7 @@ class MainActivityComplete : AppCompatActivity() {
     private lateinit var database: SavedPlaceDatabase
     private var currentMapView: MapView? = null
     private var currentLocation: Location? = null
+    private var speedTextView: TextView? = null
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -93,6 +94,27 @@ class MainActivityComplete : AppCompatActivity() {
             mapView.onCreate(null)
             frame.addView(mapView)
             
+            // Speed Display (top left)
+            val speedLayout = LinearLayout(this)
+            speedLayout.orientation = LinearLayout.VERTICAL
+            speedLayout.setBackgroundColor(0xCC000000.toInt())
+            speedLayout.setPadding(24, 24, 24, 24)
+            
+            speedTextView = TextView(this)
+            speedTextView?.text = "0 km/h"
+            speedTextView?.textSize = 28f
+            speedTextView?.setTextColor(0xFFFFFFFF.toInt())
+            speedLayout.addView(speedTextView)
+            
+            val speedParams = FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT)
+            speedParams.gravity = android.view.Gravity.TOP or android.view.Gravity.START
+            speedParams.setMargins(16, 16, 0, 0)
+            frame.addView(speedLayout, speedParams)
+            
+            // FAB Buttons (right side)
+            val fabLayout = LinearLayout(this)
+            fabLayout.orientation = LinearLayout.VERTICAL
+            
             val fabGPS = FloatingActionButton(this)
             fabGPS.setImageResource(android.R.drawable.ic_menu_mylocation)
             fabGPS.setOnClickListener {
@@ -100,6 +122,8 @@ class MainActivityComplete : AppCompatActivity() {
                     fusedLocationClient.lastLocation.addOnSuccessListener { loc ->
                         loc?.let {
                             currentLocation = it
+                            val speed = it.speed * 3.6 // m/s to km/h
+                            speedTextView?.text = "${speed.toInt()} km/h"
                             mapView.getMapAsync { map -> map.cameraPosition = CameraPosition.Builder().target(LatLng(it.latitude, it.longitude)).zoom(15.0).build() }
                             Toast.makeText(this, "📍 موقعیت شما", Toast.LENGTH_SHORT).show()
                         }
@@ -108,10 +132,32 @@ class MainActivityComplete : AppCompatActivity() {
                     ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 1001)
                 }
             }
-            val params = FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT)
-            params.gravity = android.view.Gravity.END or android.view.Gravity.BOTTOM
-            params.setMargins(0, 0, 32, 200)
-            frame.addView(fabGPS, params)
+            fabLayout.addView(fabGPS)
+            
+            val fabZoomIn = FloatingActionButton(this)
+            fabZoomIn.setImageResource(android.R.drawable.ic_input_add)
+            fabZoomIn.setOnClickListener {
+                mapView.getMapAsync { map ->
+                    val current = map.cameraPosition
+                    map.cameraPosition = CameraPosition.Builder().target(current.target).zoom(current.zoom + 1).build()
+                }
+            }
+            fabLayout.addView(fabZoomIn)
+            
+            val fabZoomOut = FloatingActionButton(this)
+            fabZoomOut.setImageResource(android.R.drawable.ic_delete)
+            fabZoomOut.setOnClickListener {
+                mapView.getMapAsync { map ->
+                    val current = map.cameraPosition
+                    map.cameraPosition = CameraPosition.Builder().target(current.target).zoom(current.zoom - 1).build()
+                }
+            }
+            fabLayout.addView(fabZoomOut)
+            
+            val fabParams = FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT)
+            fabParams.gravity = android.view.Gravity.END or android.view.Gravity.BOTTOM
+            fabParams.setMargins(0, 0, 32, 200)
+            frame.addView(fabLayout, fabParams)
             
             val btnNav = Button(this)
             btnNav.text = "🚗 مسیریابی"
@@ -119,12 +165,36 @@ class MainActivityComplete : AppCompatActivity() {
                 currentLocation?.let { loc ->
                     lifecycleScope.launch {
                         try {
+                            btnNav.isEnabled = false
+                            btnNav.text = "⏳ در حال محاسبه..."
                             val routes = osmrAPI.getRoutes(loc.latitude, loc.longitude, 35.6997, 51.3380, 3)
                             if (routes.isNotEmpty()) {
-                                tts?.speak("${routes.size} مسیر یافت شد. فاصله ${(routes[0].distance/1000).toInt()} کیلومتر", TextToSpeech.QUEUE_FLUSH, null, null)
-                                Toast.makeText(this@MainActivityComplete, "✅ ${routes.size} مسیر یافت شد", Toast.LENGTH_LONG).show()
+                                val route = routes[0]
+                                val distance = (route.distance/1000).toInt()
+                                val duration = (route.duration/60).toInt()
+                                
+                                // Draw route on map
+                                mapView.getMapAsync { map ->
+                                    // Add destination marker
+                                    map.addMarker(MarkerOptions()
+                                        .position(LatLng(35.6997, 51.3380))
+                                        .title("🏁 مقصد")
+                                        .snippet("میدان آزادی"))
+                                    
+                                    // TODO: Draw polyline (needs PolylineOptions implementation)
+                                    Toast.makeText(this@MainActivityComplete, "✅ مسیر: $distance کیلومتر، $duration دقیقه", Toast.LENGTH_LONG).show()
+                                }
+                                
+                                tts?.speak("${routes.size} مسیر یافت شد. فاصله $distance کیلومتر، زمان $duration دقیقه", TextToSpeech.QUEUE_FLUSH, null, null)
+                                btnNav.text = "✅ مسیر یافت شد"
+                            } else {
+                                btnNav.text = "🚗 مسیریابی"
+                                Toast.makeText(this@MainActivityComplete, "مسیری یافت نشد", Toast.LENGTH_SHORT).show()
                             }
+                            btnNav.isEnabled = true
                         } catch (e: Exception) {
+                            btnNav.isEnabled = true
+                            btnNav.text = "🚗 مسیریابی"
                             Toast.makeText(this@MainActivityComplete, "خطا: ${e.message}", Toast.LENGTH_SHORT).show()
                         }
                     }
@@ -320,6 +390,31 @@ class MainActivityComplete : AppCompatActivity() {
         tv.textSize = 16f
         tv.gravity = android.view.Gravity.CENTER
         contentFrame.addView(tv)
+    }
+    
+    override fun onResume() {
+        super.onResume()
+        currentMapView?.onResume()
+    }
+    
+    override fun onPause() {
+        super.onPause()
+        currentMapView?.onPause()
+    }
+    
+    override fun onStart() {
+        super.onStart()
+        currentMapView?.onStart()
+    }
+    
+    override fun onStop() {
+        super.onStop()
+        currentMapView?.onStop()
+    }
+    
+    override fun onLowMemory() {
+        super.onLowMemory()
+        currentMapView?.onLowMemory()
     }
     
     override fun onDestroy() {
