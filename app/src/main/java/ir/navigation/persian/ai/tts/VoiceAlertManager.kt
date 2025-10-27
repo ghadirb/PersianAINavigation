@@ -263,6 +263,22 @@ class VoiceAlertManager(private val context: Context) {
     }
     
     /**
+     * هشدار پلیس راه (مانند Waze)
+     */
+    fun alertPolice(distance: Int, policeType: String = "پلیس") {
+        if (isMuted || !isInitialized) return
+        
+        val message = when {
+            distance > 1000 -> "توجه! $policeType در یک کیلومتر جلوتر گزارش شده است"
+            distance > 500 -> "هشدار! $policeType در ${distance} متر جلوتر"
+            distance > 200 -> "$policeType در ${distance} متری"
+            else -> "$policeType در پیش رو"
+        }
+        
+        playAlert(message, speed = 1.1f)
+    }
+    
+    /**
      * هشدار ترافیک سنگین
      */
     fun alertHeavyTraffic(distance: Int) {
