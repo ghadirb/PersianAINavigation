@@ -110,4 +110,16 @@ class SavedPlaceDatabase(context: Context) :
         val db = writableDatabase
         return db.delete(TABLE_PLACES, "$COL_ID = ?", arrayOf(id.toString()))
     }
+    
+    /**
+     * افزودن مکان (متد کوتاه برای سازگاری)
+     */
+    fun addPlace(name: String, latitude: Double, longitude: Double, category: String = "other"): Long {
+        return savePlace(SavedPlace(
+            name = name,
+            latitude = latitude,
+            longitude = longitude,
+            category = category
+        ))
+    }
 }

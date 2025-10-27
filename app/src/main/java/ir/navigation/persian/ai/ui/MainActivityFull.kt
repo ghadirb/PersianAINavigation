@@ -18,8 +18,10 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.tabs.TabLayout
 import ir.navigation.persian.ai.api.NominatimAPI
 import ir.navigation.persian.ai.api.OSMRAPI
+import ir.navigation.persian.ai.data.CameraData
 import ir.navigation.persian.ai.db.SavedPlaceDatabase
 import ir.navigation.persian.ai.ml.AIRouteLearning
+import ir.navigation.persian.ai.model.CameraType
 import kotlinx.coroutines.launch
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.geometry.LatLng

@@ -3,6 +3,7 @@ package ir.navigation.persian.ai.ui
 import android.app.Dialog
 import android.content.Context
 import android.os.Bundle
+import android.view.View
 import android.widget.*
 import androidx.lifecycle.lifecycleScope
 import ir.navigation.persian.ai.tts.TTSMode
@@ -44,9 +45,10 @@ class TTSSettingsDialog(
         
         // فاصله
         val spacer1 = View(context)
-        spacer1.layoutParams = LinearLayout.LayoutParams(
+        val spacer1Params = LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT, 32
         )
+        spacer1.layoutParams = spacer1Params
         layout.addView(spacer1)
         
         // RadioGroup
@@ -77,9 +79,10 @@ class TTSSettingsDialog(
         
         // فاصله
         val spacer2 = View(context)
-        spacer2.layoutParams = LinearLayout.LayoutParams(
+        val spacer2Params = LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT, 24
         )
+        spacer2.layoutParams = spacer2Params
         layout.addView(spacer2)
         
         // توضیحات
@@ -90,9 +93,10 @@ class TTSSettingsDialog(
         
         // فاصله
         val spacer3 = View(context)
-        spacer3.layoutParams = LinearLayout.LayoutParams(
+        val spacer3Params = LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT, 32
         )
+        spacer3.layoutParams = spacer3Params
         layout.addView(spacer3)
         
         // ProgressBar
