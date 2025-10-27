@@ -11,6 +11,7 @@ import androidx.core.app.ActivityCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.location.*
 import ir.navigation.persian.ai.api.OSMRAPI
+import ir.navigation.persian.ai.ml.AIRouteLearning
 import kotlinx.coroutines.launch
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.geometry.LatLng
@@ -28,6 +29,7 @@ class NavigationDrivingActivity : AppCompatActivity() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private var tts: TextToSpeech? = null
     private val osmrAPI = OSMRAPI()
+    private lateinit var aiLearning: AIRouteLearning
     private var currentRoute: OSMRAPI.RouteInfo? = null
     private var currentStepIndex = 0
     private var isNavigating = false
@@ -48,6 +50,8 @@ class NavigationDrivingActivity : AppCompatActivity() {
         
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         tts = TextToSpeech(this) { if (it == TextToSpeech.SUCCESS) tts?.language = Locale("fa", "IR") }
+        aiLearning = AIRouteLearning(this)
+        aiLearning.startRecording(intent.getDoubleExtra("startLat", 0.0), intent.getDoubleExtra("startLon", 0.0), destLat, destLon)
         
         setupUI(destLat, destLon, destName)
         startNavigation(destLat, destLon)
@@ -176,6 +180,7 @@ class NavigationDrivingActivity : AppCompatActivity() {
     }
     
     private fun updateLocation(location: Location) {
+        aiLearning.addWaypoint(location)
         val speed = location.speed * 3.6 // m/s to km/h
         tvSpeed.text = speed.toInt().toString()
         
@@ -212,6 +217,7 @@ class NavigationDrivingActivity : AppCompatActivity() {
             
             if (isNavigating) {
                 speak("به مقصد رسیدید")
+                aiLearning.finishRecording(0.9f)
                 finish()
             }
         }
