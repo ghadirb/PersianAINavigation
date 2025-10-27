@@ -35,9 +35,9 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
         
-        <!-- Main Activity Simple - LAUNCHER -->
+        <!-- Main Activity Complete - LAUNCHER -->
         <activity
-            android:name=".ui.MainActivitySimple"
+            android:name=".ui.MainActivityComplete"
             android:exported="true"
             android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustResize">
