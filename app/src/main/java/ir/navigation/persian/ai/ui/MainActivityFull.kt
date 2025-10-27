@@ -110,22 +110,34 @@ class MainActivityFull : AppCompatActivity() {
             mapView.onCreate(null)
             frame.addView(mapView)
             
-            // Speed Display
-            val speedLayout = LinearLayout(this)
-            speedLayout.orientation = LinearLayout.VERTICAL
-            speedLayout.setBackgroundColor(0xCC000000.toInt())
-            speedLayout.setPadding(24, 24, 24, 24)
+            // نوار اطلاعات بالا (مانند نشان و Google Maps)
+            val topBar = LinearLayout(this)
+            topBar.orientation = LinearLayout.VERTICAL
+            topBar.setBackgroundColor(0xEE2196F3.toInt()) // آبی مانند نشان
+            topBar.setPadding(16, 32, 16, 16)
             
+            // سرعت فعلی
             speedTextView = TextView(this)
-            speedTextView?.text = "0 km/h"
-            speedTextView?.textSize = 28f
+            speedTextView?.text = "🚗 0 km/h"
+            speedTextView?.textSize = 24f
             speedTextView?.setTextColor(0xFFFFFFFF.toInt())
-            speedLayout.addView(speedTextView)
+            speedTextView?.gravity = android.view.Gravity.CENTER
+            topBar.addView(speedTextView)
             
-            val speedParams = FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT)
-            speedParams.gravity = android.view.Gravity.TOP or android.view.Gravity.START
-            speedParams.setMargins(16, 16, 0, 0)
-            frame.addView(speedLayout, speedParams)
+            // اطلاعات مسیر
+            val routeInfo = TextView(this)
+            routeInfo.text = "📍 آماده مسیریابی"
+            routeInfo.textSize = 14f
+            routeInfo.setTextColor(0xFFFFFFFF.toInt())
+            routeInfo.gravity = android.view.Gravity.CENTER
+            topBar.addView(routeInfo)
+            
+            val topParams = FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT
+            )
+            topParams.gravity = android.view.Gravity.TOP
+            frame.addView(topBar, topParams)
             
             // FAB Buttons
             val fabLayout = LinearLayout(this)
@@ -289,25 +301,46 @@ class MainActivityFull : AppCompatActivity() {
         contentFrame.removeAllViews()
         val layout = LinearLayout(this)
         layout.orientation = LinearLayout.VERTICAL
-        layout.setPadding(32, 32, 32, 32)
+        layout.setBackgroundColor(0xFFF5F5F5.toInt())
         
-        val title = TextView(this)
-        title.text = "🔍 جستجوی مکان"
-        title.textSize = 20f
-        layout.addView(title)
+        // نوار جستجو (مانند نشان)
+        val searchBar = LinearLayout(this)
+        searchBar.orientation = LinearLayout.HORIZONTAL
+        searchBar.setBackgroundColor(0xFFFFFFFF.toInt())
+        searchBar.setPadding(16, 32, 16, 16)
+        searchBar.elevation = 8f
         
         val editText = EditText(this)
-        editText.hint = "نام مکان (مثلاً میدان آزادی)"
-        layout.addView(editText)
+        editText.hint = "🔍 جستجو در تمام دنیا..."
+        editText.textSize = 16f
+        editText.setPadding(16, 16, 16, 16)
+        editText.setBackgroundColor(0xFFF0F0F0.toInt())
+        searchBar.addView(editText, LinearLayout.LayoutParams(
+            0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        
+        val btnSearch = Button(this)
+        btnSearch.text = "🔍"
+        btnSearch.setBackgroundColor(0xFF2196F3.toInt())
+        btnSearch.setTextColor(0xFFFFFFFF.toInt())
+        searchBar.addView(btnSearch)
+        
+        layout.addView(searchBar)
+        
+        // راهنما
+        val hint = TextView(this)
+        hint.text = "💡 می‌توانید هر مکانی در دنیا را جستجو کنید:\n• میدان آزادی تهران\n• برج ایفل پاریس\n• تایمز اسکوئر نیویورک"
+        hint.textSize = 12f
+        hint.setTextColor(0xFF666666.toInt())
+        hint.setPadding(32, 16, 32, 16)
+        layout.addView(hint)
         
         val scrollView = ScrollView(this)
         val resultLayout = LinearLayout(this)
         resultLayout.orientation = LinearLayout.VERTICAL
+        resultLayout.setPadding(16, 16, 16, 16)
         scrollView.addView(resultLayout)
         layout.addView(scrollView, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f))
         
-        val btnSearch = Button(this)
-        btnSearch.text = "جستجو"
         btnSearch.setOnClickListener {
             val query = editText.text.toString()
             if (query.isNotEmpty()) {
@@ -334,29 +367,49 @@ class MainActivityFull : AppCompatActivity() {
                             
                             val buttonLayout = LinearLayout(this@MainActivityFull)
                             buttonLayout.orientation = LinearLayout.HORIZONTAL
+                            buttonLayout.setPadding(0, 16, 0, 0)
                             
                             val btnShow = Button(this@MainActivityFull)
-                            btnShow.text = "نمایش"
+                            btnShow.text = "🗺️ نمایش"
+                            btnShow.setBackgroundColor(0xFF4CAF50.toInt())
+                            btnShow.setTextColor(0xFFFFFFFF.toInt())
                             btnShow.setOnClickListener {
                                 tabLayout.selectTab(tabLayout.getTabAt(0))
                                 showLocationOnMap(LatLng(place.lat.toDouble(), place.lon.toDouble()), place.displayName)
                             }
-                            buttonLayout.addView(btnShow)
+                            val btnShowParams = LinearLayout.LayoutParams(
+                                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f
+                            )
+                            btnShowParams.setMargins(0, 0, 8, 0)
+                            buttonLayout.addView(btnShow, btnShowParams)
                             
                             val btnRoute = Button(this@MainActivityFull)
-                            btnRoute.text = "مسیریابی"
+                            btnRoute.text = "🚗 مسیریابی"
+                            btnRoute.setBackgroundColor(0xFF2196F3.toInt())
+                            btnRoute.setTextColor(0xFFFFFFFF.toInt())
                             btnRoute.setOnClickListener {
                                 showRouteOptions(LatLng(place.lat.toDouble(), place.lon.toDouble()), place.displayName)
                             }
-                            buttonLayout.addView(btnRoute)
+                            val btnRouteParams = LinearLayout.LayoutParams(
+                                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f
+                            )
+                            btnRouteParams.setMargins(4, 0, 4, 0)
+                            buttonLayout.addView(btnRoute, btnRouteParams)
                             
                             val btnSave = Button(this@MainActivityFull)
-                            btnSave.text = "ذخیره"
+                            btnSave.text = "💾 ذخیره"
+                            btnSave.setBackgroundColor(0xFFFF9800.toInt())
+                            btnSave.setTextColor(0xFFFFFFFF.toInt())
                             btnSave.setOnClickListener {
                                 database.addPlace(place.displayName, place.lat.toDouble(), place.lon.toDouble())
-                                Toast.makeText(this@MainActivityFull, "✅ ذخیره شد", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(this@MainActivityFull, "✅ ذخیره شد در تب ذخیره", Toast.LENGTH_SHORT).show()
+                                tts?.speak("ذخیره شد", TextToSpeech.QUEUE_FLUSH, null, null)
                             }
-                            buttonLayout.addView(btnSave)
+                            val btnSaveParams = LinearLayout.LayoutParams(
+                                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f
+                            )
+                            btnSaveParams.setMargins(8, 0, 0, 0)
+                            buttonLayout.addView(btnSave, btnSaveParams)
                             
                             placeCard.addView(buttonLayout)
                             
@@ -367,13 +420,20 @@ class MainActivityFull : AppCompatActivity() {
                         
                         tts?.speak("${results.size} نتیجه یافت شد", TextToSpeech.QUEUE_FLUSH, null, null)
                     } catch (e: Exception) {
-                        Toast.makeText(this@MainActivityFull, "خطا: ${e.message}", Toast.LENGTH_SHORT).show()
+                        resultLayout.removeAllViews()
+                        val errorMsg = TextView(this@MainActivityFull)
+                        errorMsg.text = "⚠️ خطا در جستجو\n\n${e.message}\n\nلطفاً اتصال اینترنت را بررسی کنید"
+                        errorMsg.textSize = 16f
+                        errorMsg.gravity = android.view.Gravity.CENTER
+                        errorMsg.setPadding(32, 64, 32, 64)
+                        errorMsg.setTextColor(0xFFFF5722.toInt())
+                        resultLayout.addView(errorMsg)
                     }
                 }
+            } else {
+                Toast.makeText(this@MainActivityFull, "لطفاً نام مکان را وارد کنید", Toast.LENGTH_SHORT).show()
             }
         }
-        layout.addView(btnSearch)
-        
         contentFrame.addView(layout)
     }
     
@@ -392,46 +452,108 @@ class MainActivityFull : AppCompatActivity() {
         contentFrame.removeAllViews()
         val layout = LinearLayout(this)
         layout.orientation = LinearLayout.VERTICAL
-        layout.setPadding(32, 32, 32, 32)
+        layout.setBackgroundColor(0xFFF5F5F5.toInt())
+        
+        // هدر
+        val header = LinearLayout(this)
+        header.orientation = LinearLayout.VERTICAL
+        header.setBackgroundColor(0xFF2196F3.toInt())
+        header.setPadding(32, 32, 32, 32)
         
         val title = TextView(this)
         title.text = "📍 مکان‌های ذخیره شده"
-        title.textSize = 20f
-        layout.addView(title)
+        title.textSize = 22f
+        title.setTextColor(0xFFFFFFFF.toInt())
+        header.addView(title)
+        
+        val subtitle = TextView(this)
+        subtitle.text = "مکان‌های مورد علاقه شما"
+        subtitle.textSize = 14f
+        subtitle.setTextColor(0xFFE3F2FD.toInt())
+        header.addView(subtitle)
+        
+        layout.addView(header)
         
         val scrollView = ScrollView(this)
         val listLayout = LinearLayout(this)
         listLayout.orientation = LinearLayout.VERTICAL
         
         val places = database.getAllPlaces()
+        
+        if (places.isEmpty()) {
+            val emptyMsg = TextView(this)
+            emptyMsg.text = "📭 هنوز مکانی ذخیره نکرده‌اید\n\nاز تب جستجو مکان‌های مورد علاقه را ذخیره کنید"
+            emptyMsg.textSize = 16f
+            emptyMsg.gravity = android.view.Gravity.CENTER
+            emptyMsg.setPadding(32, 64, 32, 64)
+            emptyMsg.setTextColor(0xFF666666.toInt())
+            listLayout.addView(emptyMsg)
+        }
+        
         places.forEach { place ->
             val placeCard = LinearLayout(this)
             placeCard.orientation = LinearLayout.VERTICAL
             placeCard.setPadding(24, 24, 24, 24)
-            placeCard.setBackgroundColor(0xFFEEEEEE.toInt())
+            placeCard.setBackgroundColor(0xFFFFFFFF.toInt())
+            placeCard.elevation = 4f
             
             val placeName = TextView(this)
-            placeName.text = place.name
+            placeName.text = "📍 ${place.name}"
             placeName.textSize = 18f
+            placeName.setTextColor(0xFF000000.toInt())
             placeCard.addView(placeName)
+            
+            val placeCoords = TextView(this)
+            placeCoords.text = "${place.latitude}, ${place.longitude}"
+            placeCoords.textSize = 12f
+            placeCoords.setTextColor(0xFF666666.toInt())
+            placeCard.addView(placeCoords)
             
             val buttonLayout = LinearLayout(this)
             buttonLayout.orientation = LinearLayout.HORIZONTAL
+            buttonLayout.setPadding(0, 16, 0, 0)
             
             val btnShow = Button(this)
-            btnShow.text = "نمایش"
+            btnShow.text = "🗺️ نمایش"
+            btnShow.setBackgroundColor(0xFF4CAF50.toInt())
+            btnShow.setTextColor(0xFFFFFFFF.toInt())
             btnShow.setOnClickListener {
                 tabLayout.selectTab(tabLayout.getTabAt(0))
                 showLocationOnMap(LatLng(place.latitude, place.longitude), place.name)
             }
-            buttonLayout.addView(btnShow)
+            val btnShowParams = LinearLayout.LayoutParams(
+                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f
+            )
+            btnShowParams.setMargins(0, 0, 8, 0)
+            buttonLayout.addView(btnShow, btnShowParams)
             
             val btnRoute = Button(this)
-            btnRoute.text = "مسیریابی"
+            btnRoute.text = "🚗 مسیریابی"
+            btnRoute.setBackgroundColor(0xFF2196F3.toInt())
+            btnRoute.setTextColor(0xFFFFFFFF.toInt())
             btnRoute.setOnClickListener {
                 showRouteOptions(LatLng(place.latitude, place.longitude), place.name)
             }
-            buttonLayout.addView(btnRoute)
+            val btnRouteParams = LinearLayout.LayoutParams(
+                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f
+            )
+            btnRouteParams.setMargins(4, 0, 4, 0)
+            buttonLayout.addView(btnRoute, btnRouteParams)
+            
+            val btnDelete = Button(this)
+            btnDelete.text = "🗑️ حذف"
+            btnDelete.setBackgroundColor(0xFFF44336.toInt())
+            btnDelete.setTextColor(0xFFFFFFFF.toInt())
+            btnDelete.setOnClickListener {
+                database.deletePlace(place.id)
+                Toast.makeText(this, "❌ حذف شد", Toast.LENGTH_SHORT).show()
+                showSavedTab() // رفرش
+            }
+            val btnDeleteParams = LinearLayout.LayoutParams(
+                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f
+            )
+            btnDeleteParams.setMargins(8, 0, 0, 0)
+            buttonLayout.addView(btnDelete, btnDeleteParams)
             
             placeCard.addView(buttonLayout)
             
@@ -539,28 +661,125 @@ class MainActivityFull : AppCompatActivity() {
     
     private fun showSettingsTab() {
         contentFrame.removeAllViews()
+        val scrollView = ScrollView(this)
         val layout = LinearLayout(this)
         layout.orientation = LinearLayout.VERTICAL
         layout.setPadding(32, 32, 32, 32)
         
         val title = TextView(this)
-        title.text = "⚙️ تنظیمات"
-        title.textSize = 20f
+        title.text = "⚙️ تنظیمات و مدیریت"
+        title.textSize = 22f
+        title.setTextColor(0xFF000000.toInt())
         layout.addView(title)
         
+        // دکمه مدیریت کلیدها
         val btnUnlock = Button(this)
-        btnUnlock.text = "مدیریت کلیدهای API"
+        btnUnlock.text = "🔑 مدیریت کلیدهای API"
         btnUnlock.setOnClickListener {
             startActivity(Intent(this, UnlockActivity::class.java))
         }
-        layout.addView(btnUnlock)
+        val btnUnlockParams = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        )
+        btnUnlockParams.setMargins(0, 16, 0, 8)
+        layout.addView(btnUnlock, btnUnlockParams)
         
-        val info = TextView(this)
-        info.text = "\n\nمسیریاب هوشمند فارسی\nنسخه 1.0\n\nامکانات:\n✅ نقشه MapLibre\n✅ کلیک روی نقشه\n✅ مسیریابی OSRM\n✅ چند مسیر\n✅ حالت رانندگی\n✅ هشدارهای صوتی\n✅ جستجو کامل\n✅ ذخیره مکان‌ها"
-        info.setPadding(16, 16, 16, 16)
-        layout.addView(info)
+        // توضیحات کلیدها
+        val keysInfo = TextView(this)
+        keysInfo.text = "برای استفاده از امکانات کامل، کلیدهای API را وارد کنید:\n• Google Maps API\n• OpenAI API\n• Neshan API"
+        keysInfo.setPadding(16, 8, 16, 16)
+        keysInfo.setTextColor(0xFF666666.toInt())
+        keysInfo.textSize = 14f
+        layout.addView(keysInfo)
         
-        contentFrame.addView(layout)
+        // خط جداکننده
+        val divider1 = View(this)
+        divider1.setBackgroundColor(0xFFCCCCCC.toInt())
+        val dividerParams1 = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, 2
+        )
+        dividerParams1.setMargins(0, 16, 0, 16)
+        layout.addView(divider1, dividerParams1)
+        
+        // اطلاعات برنامه
+        val appInfo = TextView(this)
+        appInfo.text = "📱 مسیریاب هوشمند فارسی\n🔢 نسخه 1.0.0\n👨‍💻 توسعه با Kotlin\n🗺️ MapLibre GL"
+        appInfo.textSize = 16f
+        appInfo.setTextColor(0xFF000000.toInt())
+        appInfo.setPadding(16, 16, 16, 16)
+        layout.addView(appInfo)
+        
+        // خط جداکننده
+        val divider2 = View(this)
+        divider2.setBackgroundColor(0xFFCCCCCC.toInt())
+        val dividerParams2 = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, 2
+        )
+        dividerParams2.setMargins(0, 16, 0, 16)
+        layout.addView(divider2, dividerParams2)
+        
+        // امکانات
+        val featuresTitle = TextView(this)
+        featuresTitle.text = "✨ امکانات برنامه:"
+        featuresTitle.textSize = 18f
+        featuresTitle.setTextColor(0xFF000000.toInt())
+        layout.addView(featuresTitle)
+        
+        val features = TextView(this)
+        features.text = """
+            ✅ نقشه تعاملی MapLibre
+            ✅ کلیک روی نقشه برای انتخاب مقصد
+            ✅ مسیریابی با OSRM
+            ✅ نمایش چند مسیر مختلف
+            ✅ حالت رانندگی با GPS
+            ✅ هشدارهای صوتی فارسی
+            ✅ 3 حالت TTS (Android/ONNX/Online)
+            ✅ دوربین‌های سرعت تهران
+            ✅ هشدار سرعت‌گیر
+            ✅ تشخیص تخطی از سرعت
+            ✅ جستجوی مکان با Nominatim
+            ✅ ذخیره مکان‌های مورد علاقه
+            ✅ دستیار هوشمند AI
+            ✅ یادگیری مسیرها با AI
+            ✅ اشتراک‌گذاری با Google Drive
+        """.trimIndent()
+        features.textSize = 14f
+        features.setTextColor(0xFF333333.toInt())
+        features.setPadding(16, 8, 16, 16)
+        layout.addView(features)
+        
+        // خط جداکننده
+        val divider3 = View(this)
+        divider3.setBackgroundColor(0xFFCCCCCC.toInt())
+        val dividerParams3 = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, 2
+        )
+        dividerParams3.setMargins(0, 16, 0, 16)
+        layout.addView(divider3, dividerParams3)
+        
+        // راهنما
+        val helpTitle = TextView(this)
+        helpTitle.text = "📖 راهنمای استفاده:"
+        helpTitle.textSize = 18f
+        helpTitle.setTextColor(0xFF000000.toInt())
+        layout.addView(helpTitle)
+        
+        val help = TextView(this)
+        help.text = """
+            🗺️ نقشه: روی نقشه کلیک کنید تا مقصد را انتخاب کنید
+            🔍 جستجو: نام مکان را جستجو کنید
+            📍 ذخیره: مکان‌های ذخیره شده را مشاهده کنید
+            🤖 AI: با دستیار هوشمند چت کنید
+            ⚙️ سایر: تنظیمات و مدیریت کلیدها
+        """.trimIndent()
+        help.textSize = 14f
+        help.setTextColor(0xFF333333.toInt())
+        help.setPadding(16, 8, 16, 16)
+        layout.addView(help)
+        
+        scrollView.addView(layout)
+        contentFrame.addView(scrollView)
     }
     
     private fun showError(msg: String) {
@@ -586,5 +805,18 @@ class MainActivityFull : AppCompatActivity() {
         tts?.stop()
         tts?.shutdown()
         currentMapView?.onDestroy()
+    }
+    
+    override fun onBackPressed() {
+        // دیالوگ خروج مانند نشان
+        val dialog = androidx.appcompat.app.AlertDialog.Builder(this)
+        dialog.setTitle("🚗 خروج از برنامه")
+        dialog.setMessage("آیا می‌خواهید از مسیریاب خارج شوید؟")
+        dialog.setPositiveButton("خروج") { _, _ ->
+            tts?.speak("خداحافظ", TextToSpeech.QUEUE_FLUSH, null, null)
+            finishAffinity()
+        }
+        dialog.setNegativeButton("ادامه", null)
+        dialog.show()
     }
 }
