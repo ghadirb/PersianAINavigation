@@ -31,7 +31,29 @@ class VoiceAlertManager(private val context: Context) {
             val savedMode = getSavedMode()
             isInitialized = smartEngine.initialize(savedMode)
             Log.d(TAG, "Voice Alert Manager initialized with mode: $savedMode, success: $isInitialized")
+            
+            // هشدار شروع (مانند نشان)
+            if (isInitialized) {
+                speak("سیستم هشدار صوتی فعال شد. آماده مسیریابی")
+            }
         }
+    }
+    
+    /**
+     * هشدار شروع مسیریابی (مانند نشان)
+     */
+    fun alertNavigationStart(destinationName: String, distance: Double, duration: Double) {
+        if (isMuted || !isInitialized) return
+        
+        val distanceKm = (distance / 1000).toInt()
+        val durationMin = (duration / 60).toInt()
+        
+        val message = "شروع مسیریابی به $destinationName. " +
+                     "مسافت $distanceKm کیلومتر. " +
+                     "زمان تقریبی $durationMin دقیقه. " +
+                     "شروع به حرکت کنید"
+        
+        speak(message)
     }
     
     /**
