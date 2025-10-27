@@ -19,6 +19,7 @@ import com.google.android.material.tabs.TabLayout
 import ir.navigation.persian.ai.api.NominatimAPI
 import ir.navigation.persian.ai.api.OSMRAPI
 import ir.navigation.persian.ai.db.SavedPlaceDatabase
+import ir.navigation.persian.ai.ml.AIRouteLearning
 import kotlinx.coroutines.launch
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.geometry.LatLng
@@ -40,6 +41,7 @@ class MainActivityFull : AppCompatActivity() {
     private val nominatimAPI = NominatimAPI()
     private val osmrAPI = OSMRAPI()
     private lateinit var database: SavedPlaceDatabase
+    private lateinit var aiLearning: AIRouteLearning
     private var currentMapView: MapView? = null
     private var currentMap: MapLibreMap? = null
     private var currentLocation: Location? = null
@@ -52,6 +54,7 @@ class MainActivityFull : AppCompatActivity() {
         
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         database = SavedPlaceDatabase(this)
+        aiLearning = AIRouteLearning(this)
         tts = TextToSpeech(this) { if (it == TextToSpeech.SUCCESS) tts?.language = Locale("fa", "IR") }
         
         val mainLayout = LinearLayout(this)
@@ -231,6 +234,8 @@ class MainActivityFull : AppCompatActivity() {
     
     private fun startDrivingMode(destination: LatLng, name: String, route: OSMRAPI.RouteInfo) {
         val intent = Intent(this, NavigationDrivingActivity::class.java)
+        intent.putExtra("startLat", currentLocation?.latitude ?: 0.0)
+        intent.putExtra("startLon", currentLocation?.longitude ?: 0.0)
         intent.putExtra("destLat", destination.latitude)
         intent.putExtra("destLon", destination.longitude)
         intent.putExtra("destName", name)
