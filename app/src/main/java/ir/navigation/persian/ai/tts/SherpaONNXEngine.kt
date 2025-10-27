@@ -63,14 +63,16 @@ class SherpaONNXEngine(private val context: Context) {
      */
     private fun copyModelFromAssets(destFile: File) {
         try {
-            // در صورت وجود مدل در assets
+            // کپی مدل ONNX از assets
             context.assets.open("vits-mimic3-fa-haaniye_low/$MODEL_NAME").use { input ->
                 destFile.outputStream().use { output ->
                     input.copyTo(output)
                 }
             }
+            Log.d(TAG, "Model copied successfully: ${destFile.absolutePath}")
         } catch (e: Exception) {
-            Log.e(TAG, "Model not in assets, will use external path", e)
+            Log.e(TAG, "Failed to copy model from assets", e)
+            throw e
         }
     }
     
