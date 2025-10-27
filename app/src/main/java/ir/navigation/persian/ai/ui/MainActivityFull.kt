@@ -54,6 +54,9 @@ class MainActivityFull : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
+        // مقداردهی اولیه MapLibre (قبل از استفاده از MapView)
+        MapLibre.getInstance(this)
+        
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         database = SavedPlaceDatabase(this)
         aiLearning = AIRouteLearning(this)
