@@ -120,8 +120,7 @@ class UnlockActivity : AppCompatActivity() {
     }
     
     private fun navigateToMain() {
-        val intent = Intent(this, MainActivity::class.java)
-        startActivity(intent)
+        // برگشت به صفحه قبلی به جای باز کردن MainActivity جدید
         finish()
     }
 }
