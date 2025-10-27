@@ -158,9 +158,17 @@ class MainActivityFull : AppCompatActivity() {
             fabLayout.addView(fabZoomIn)
             
             val fabZoomOut = FloatingActionButton(this)
-            fabZoomOut.setImageResource(android.R.drawable.ic_delete)
+            fabZoomOut.setImageResource(android.R.drawable.ic_menu_close_clear_cancel)
+            fabZoomOut.contentDescription = "کوچک‌نمایی"
             fabZoomOut.setOnClickListener { zoomOut(mapView) }
             fabLayout.addView(fabZoomOut)
+            
+            // دکمه پمپ بنزین
+            val fabGasStation = FloatingActionButton(this)
+            fabGasStation.setImageResource(android.R.drawable.ic_dialog_info)
+            fabGasStation.contentDescription = "پمپ بنزین"
+            fabGasStation.setOnClickListener { showNearbyPlaces() }
+            fabLayout.addView(fabGasStation)
             
             val fabParams = FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT)
             fabParams.gravity = android.view.Gravity.END or android.view.Gravity.BOTTOM
@@ -170,8 +178,34 @@ class MainActivityFull : AppCompatActivity() {
             // Setup Map with Click Listener
             mapView.getMapAsync { map ->
                 currentMap = map
-                map.setStyle(Style.Builder().fromUri("https://demotiles.maplibre.org/style.json")) {
-                    map.cameraPosition = CameraPosition.Builder().target(LatLng(35.6892, 51.3890)).zoom(12.0).build()
+                // استفاده از OpenStreetMap tile server با جزئیات بیشتر
+                val styleJson = """
+                {
+                  "version": 8,
+                  "sources": {
+                    "osm": {
+                      "type": "raster",
+                      "tiles": ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
+                      "tileSize": 256,
+                      "attribution": "© OpenStreetMap"
+                    }
+                  },
+                  "layers": [{
+                    "id": "osm",
+                    "type": "raster",
+                    "source": "osm",
+                    "minzoom": 0,
+                    "maxzoom": 19
+                  }]
+                }
+                """.trimIndent()
+                
+                map.setStyle(Style.Builder().fromJson(styleJson)) {
+                    // شروع با zoom بیشتر روی تهران
+                    map.cameraPosition = CameraPosition.Builder().target(LatLng(35.6892, 51.3890)).zoom(13.0).build()
+                    
+                    // درخواست موقعیت فعلی
+                    goToMyLocation(mapView)
                     
                     // Add real cameras
                     CameraData.getTehranCameras().forEach { camera ->
@@ -792,6 +826,76 @@ class MainActivityFull : AppCompatActivity() {
         tv.textSize = 16f
         tv.gravity = android.view.Gravity.CENTER
         contentFrame.addView(tv)
+    }
+    
+    /**
+     * نمایش مکان‌های نزدیک (پمپ بنزین، رستوران، و...)
+     */
+    private fun showNearbyPlaces() {
+        currentLocation?.let { loc ->
+            val options = arrayOf(
+                "⛽ پمپ بنزین",
+                "🍽️ رستوران",
+                "🏥 بیمارستان",
+                "🏪 فروشگاه",
+                "🏧 عابر بانک"
+            )
+            
+            AlertDialog.Builder(this)
+                .setTitle("انتخاب نوع مکان")
+                .setItems(options) { _, which ->
+                    val type = when(which) {
+                        0 -> "fuel"
+                        1 -> "restaurant"
+                        2 -> "hospital"
+                        3 -> "shop"
+                        4 -> "atm"
+                        else -> "fuel"
+                    }
+                    searchNearbyPlaces(loc.latitude, loc.longitude, type)
+                }
+                .setNegativeButton("انصراف", null)
+                .show()
+        } ?: Toast.makeText(this, "ابتدا موقعیت فعلی را مشخص کنید", Toast.LENGTH_SHORT).show()
+    }
+    
+    /**
+     * جستجوی مکان‌های نزدیک با Nominatim
+     */
+    private fun searchNearbyPlaces(lat: Double, lon: Double, type: String) {
+        lifecycleScope.launch {
+            try {
+                Toast.makeText(this@MainActivityFull, "در حال جستجو...", Toast.LENGTH_SHORT).show()
+                
+                // استفاده از Nominatim برای جستجوی مکان‌های نزدیک
+                val query = when(type) {
+                    "fuel" -> "پمپ بنزین"
+                    "restaurant" -> "رستوران"
+                    "hospital" -> "بیمارستان"
+                    "shop" -> "فروشگاه"
+                    "atm" -> "عابر بانک"
+                    else -> "پمپ بنزین"
+                }
+                
+                val results = nominatimAPI.search("$query تهران")
+                
+                if (results.isNotEmpty()) {
+                    // نمایش نتایج روی نقشه
+                    results.take(10).forEach { place ->
+                        currentMap?.addMarker(MarkerOptions()
+                            .position(LatLng(place.lat, place.lon))
+                            .title("⛽ ${place.display_name}"))
+                    }
+                    
+                    Toast.makeText(this@MainActivityFull, "${results.size} مکان یافت شد", Toast.LENGTH_SHORT).show()
+                    tts?.speak("${results.size} مکان یافت شد", TextToSpeech.QUEUE_FLUSH, null, null)
+                } else {
+                    Toast.makeText(this@MainActivityFull, "مکانی یافت نشد", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(this@MainActivityFull, "خطا: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
     
     override fun onResume() {
