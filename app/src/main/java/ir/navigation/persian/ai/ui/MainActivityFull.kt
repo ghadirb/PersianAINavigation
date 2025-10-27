@@ -448,11 +448,93 @@ class MainActivityFull : AppCompatActivity() {
     // ========== TAB 4 & 5: Chat & Settings ==========
     private fun showChatTab() {
         contentFrame.removeAllViews()
-        val tv = TextView(this)
-        tv.text = "🤖 چت AI\n\nدر حال توسعه"
-        tv.textSize = 24f
-        tv.gravity = android.view.Gravity.CENTER
-        contentFrame.addView(tv)
+        val layout = LinearLayout(this)
+        layout.orientation = LinearLayout.VERTICAL
+        layout.setPadding(32, 32, 32, 32)
+        
+        val title = TextView(this)
+        title.text = "🤖 دستیار هوشمند AI"
+        title.textSize = 20f
+        title.setTextColor(0xFF000000.toInt())
+        layout.addView(title)
+        
+        val scrollView = ScrollView(this)
+        val chatLayout = LinearLayout(this)
+        chatLayout.orientation = LinearLayout.VERTICAL
+        chatLayout.setPadding(16, 16, 16, 16)
+        
+        val welcomeMsg = TextView(this)
+        welcomeMsg.text = "سلام! من دستیار هوشمند مسیریابی هستم.\n\nچطور می‌توانم کمکتان کنم؟\n\n• مسیریابی\n• جستجوی مکان\n• ذخیره مکان‌ها\n• هشدارهای صوتی"
+        welcomeMsg.setPadding(16, 16, 16, 16)
+        welcomeMsg.setBackgroundColor(0xFFE3F2FD.toInt())
+        welcomeMsg.setTextColor(0xFF000000.toInt())
+        welcomeMsg.textSize = 16f
+        chatLayout.addView(welcomeMsg)
+        
+        scrollView.addView(chatLayout)
+        layout.addView(scrollView, LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f))
+        
+        val inputLayout = LinearLayout(this)
+        inputLayout.orientation = LinearLayout.HORIZONTAL
+        
+        val editText = EditText(this)
+        editText.hint = "پیام خود را بنویسید..."
+        editText.setPadding(16, 16, 16, 16)
+        inputLayout.addView(editText, LinearLayout.LayoutParams(
+            0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        
+        val btnSend = Button(this)
+        btnSend.text = "ارسال"
+        btnSend.setOnClickListener {
+            val msg = editText.text.toString()
+            if (msg.isNotEmpty()) {
+                // پیام کاربر
+                val userMsg = TextView(this)
+                userMsg.text = "شما: $msg"
+                userMsg.setPadding(16, 16, 16, 16)
+                userMsg.setBackgroundColor(0xFF2196F3.toInt())
+                userMsg.setTextColor(0xFFFFFFFF.toInt())
+                userMsg.textSize = 14f
+                val userParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+                userParams.setMargins(0, 8, 0, 8)
+                userMsg.layoutParams = userParams
+                chatLayout.addView(userMsg)
+                
+                // پاسخ AI
+                val aiMsg = TextView(this)
+                val response = when {
+                    msg.contains("مسیر") || msg.contains("راه") -> "برای مسیریابی، به تب نقشه بروید و روی نقشه کلیک کنید تا مقصد را انتخاب کنید."
+                    msg.contains("جستجو") || msg.contains("پیدا") -> "از تب جستجو می‌توانید هر مکانی را جستجو کنید."
+                    msg.contains("ذخیره") || msg.contains("save") -> "مکان‌های ذخیره شده در تب ذخیره قابل مشاهده هستند."
+                    msg.contains("صدا") || msg.contains("هشدار") -> "هشدارهای صوتی فارسی در حالت رانندگی فعال می‌شوند."
+                    else -> "متوجه شدم. از تب‌های بالا برای استفاده از امکانات مختلف استفاده کنید."
+                }
+                aiMsg.text = "AI: $response"
+                aiMsg.setPadding(16, 16, 16, 16)
+                aiMsg.setBackgroundColor(0xFFE8F5E9.toInt())
+                aiMsg.setTextColor(0xFF000000.toInt())
+                aiMsg.textSize = 14f
+                val aiParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+                aiParams.setMargins(0, 8, 0, 8)
+                aiMsg.layoutParams = aiParams
+                chatLayout.addView(aiMsg)
+                
+                editText.text.clear()
+                scrollView.post { scrollView.fullScroll(ScrollView.FOCUS_DOWN) }
+                tts?.speak(response, TextToSpeech.QUEUE_FLUSH, null, null)
+            }
+        }
+        inputLayout.addView(btnSend)
+        
+        layout.addView(inputLayout)
+        contentFrame.addView(layout)
     }
     
     private fun showSettingsTab() {
