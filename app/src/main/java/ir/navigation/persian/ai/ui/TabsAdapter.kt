@@ -10,11 +10,11 @@ class TabsAdapter(activity: FragmentActivity) : FragmentStateAdapter(activity) {
     
     override fun createFragment(position: Int): Fragment {
         return when (position) {
-            0 -> MapFragmentAdvanced()
-            1 -> SavedFragment()
-            2 -> SearchFragment()
-            3 -> ChatFragment()
-            else -> SettingsFragment()
+            0 -> SimpleTabFragment.newInstance("🗺️ نقشه\n\nنقشه بزودی فعال می‌شود")
+            1 -> SimpleTabFragment.newInstance("📍 مکان‌های ذخیره شده\n\nبزودی")
+            2 -> SimpleTabFragment.newInstance("🔍 جستجو\n\nبزودی")
+            3 -> SimpleTabFragment.newInstance("🤖 چت AI\n\nبزودی")
+            else -> SimpleTabFragment.newInstance("⚙️ تنظیمات\n\nبزودی")
         }
     }
 }
