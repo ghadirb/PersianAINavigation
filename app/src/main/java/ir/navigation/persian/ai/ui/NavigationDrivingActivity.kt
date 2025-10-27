@@ -133,11 +133,25 @@ class NavigationDrivingActivity : AppCompatActivity() {
         mainLayout.addView(mapFrame, LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f))
         
+        // Button Panel
+        val buttonPanel = LinearLayout(this)
+        buttonPanel.orientation = LinearLayout.HORIZONTAL
+        
+        // TTS Settings Button
+        val btnTTSSettings = Button(this)
+        btnTTSSettings.text = "⚙️ صدا"
+        btnTTSSettings.setOnClickListener { showTTSSettings() }
+        buttonPanel.addView(btnTTSSettings, LinearLayout.LayoutParams(
+            0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        
         // Stop Button
         btnStop = Button(this)
-        btnStop.text = "⏹ توقف مسیریابی"
+        btnStop.text = "⏹ توقف"
         btnStop.setOnClickListener { finish() }
-        mainLayout.addView(btnStop)
+        buttonPanel.addView(btnStop, LinearLayout.LayoutParams(
+            0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        
+        mainLayout.addView(buttonPanel)
         
         setContentView(mainLayout)
         
@@ -297,6 +311,19 @@ class NavigationDrivingActivity : AppCompatActivity() {
     
     private fun speak(text: String) {
         tts?.speak(text, TextToSpeech.QUEUE_ADD, null, null)
+    }
+    
+    /**
+     * نمایش تنظیمات TTS
+     */
+    private fun showTTSSettings() {
+        val dialog = TTSSettingsDialog(this, voiceAlert) { newMode ->
+            lifecycleScope.launch {
+                voiceAlert.playAlert("حالت صدا تغییر کرد")
+            }
+        }
+        dialog.setTitle("تنظیمات صدای هشدار")
+        dialog.show()
     }
     
     override fun onDestroy() {

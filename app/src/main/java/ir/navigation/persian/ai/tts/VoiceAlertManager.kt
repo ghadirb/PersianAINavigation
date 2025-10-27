@@ -1,6 +1,7 @@
 package ir.navigation.persian.ai.tts
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.util.Log
 import ir.navigation.persian.ai.model.CameraType
 import kotlinx.coroutines.CoroutineScope
@@ -9,11 +10,12 @@ import kotlinx.coroutines.launch
 
 /**
  * مدیریت تمام هشدارهای صوتی فارسی
- * پشتیبانی از حالت آفلاین (TTS) و آنلاین (API)
+ * پشتیبانی از 3 حالت: آفلاین Android، آفلاین ONNX، آنلاین API
  */
 class VoiceAlertManager(private val context: Context) {
     
-    private val ttsEngine = PersianTTSEngine(context)
+    private val smartEngine = SmartTTSEngine(context)
+    private val prefs: SharedPreferences = context.getSharedPreferences("tts_settings", Context.MODE_PRIVATE)
     private var isInitialized = false
     private var isMuted = false
     
@@ -22,14 +24,51 @@ class VoiceAlertManager(private val context: Context) {
     }
     
     /**
-     * مقداردهی اولیه
+     * مقداردهی اولیه با حالت ذخیره شده
      */
     suspend fun initialize() {
         if (!isInitialized) {
-            isInitialized = ttsEngine.initialize()
-            Log.d(TAG, "Voice Alert Manager initialized: $isInitialized")
+            val savedMode = getSavedMode()
+            isInitialized = smartEngine.initialize(savedMode)
+            Log.d(TAG, "Voice Alert Manager initialized with mode: $savedMode, success: $isInitialized")
         }
     }
+    
+    /**
+     * دریافت حالت ذخیره شده
+     */
+    private fun getSavedMode(): TTSMode {
+        val modeName = prefs.getString("tts_mode", TTSMode.OFFLINE_ANDROID.name)
+        return try {
+            TTSMode.valueOf(modeName ?: TTSMode.OFFLINE_ANDROID.name)
+        } catch (e: Exception) {
+            TTSMode.OFFLINE_ANDROID
+        }
+    }
+    
+    /**
+     * ذخیره حالت
+     */
+    private fun saveMode(mode: TTSMode) {
+        prefs.edit().putString("tts_mode", mode.name).apply()
+    }
+    
+    /**
+     * تغییر حالت TTS
+     */
+    suspend fun switchMode(newMode: TTSMode): Boolean {
+        val success = smartEngine.switchMode(newMode)
+        if (success) {
+            saveMode(newMode)
+            Log.d(TAG, "TTS mode switched to: $newMode")
+        }
+        return success
+    }
+    
+    /**
+     * دریافت حالت فعلی
+     */
+    fun getCurrentMode(): TTSMode = smartEngine.getCurrentMode()
     
     /**
      * هشدار دوربین کنترل سرعت
@@ -274,8 +313,8 @@ class VoiceAlertManager(private val context: Context) {
     private fun playAlert(message: String, speed: Float = 1.0f) {
         CoroutineScope(Dispatchers.Default).launch {
             try {
-                Log.d(TAG, "Playing alert: $message")
-                ttsEngine.synthesize(message, speed)
+                Log.d(TAG, "Playing alert [${smartEngine.getCurrentMode()}]: $message")
+                smartEngine.synthesize(message, speed)
             } catch (e: Exception) {
                 Log.e(TAG, "Error playing alert", e)
             }
@@ -306,7 +345,12 @@ class VoiceAlertManager(private val context: Context) {
      * آزادسازی منابع
      */
     fun release() {
-        ttsEngine.release()
+        smartEngine.release()
         isInitialized = false
     }
+    
+    /**
+     * بررسی آماده بودن
+     */
+    fun isReady(): Boolean = smartEngine.isReady()
 }
