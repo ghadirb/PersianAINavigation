@@ -53,7 +53,7 @@ class VoiceAlertManager(private val context: Context) {
                      "زمان تقریبی $durationMin دقیقه. " +
                      "شروع به حرکت کنید"
         
-        speak(message)
+        playAlert(message)
     }
     
     /**
