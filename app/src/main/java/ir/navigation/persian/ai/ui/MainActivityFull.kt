@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.speech.tts.TextToSpeech
 import android.view.View
 import android.widget.*
+import android.widget.CheckBox
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -732,6 +733,69 @@ class MainActivityFull : AppCompatActivity() {
         layout.addView(keysInfo)
         
         // خط جداکننده
+        val divider0 = View(this)
+        divider0.setBackgroundColor(0xFFCCCCCC.toInt())
+        val dividerParams0 = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, 2
+        )
+        dividerParams0.setMargins(0, 16, 0, 16)
+        layout.addView(divider0, dividerParams0)
+        
+        // تنظیمات هشدارها
+        val alertsTitle = TextView(this)
+        alertsTitle.text = "🔔 تنظیمات هشدارها"
+        alertsTitle.textSize = 18f
+        alertsTitle.setTextColor(0xFF000000.toInt())
+        layout.addView(alertsTitle)
+        
+        val prefs = getSharedPreferences("alerts", MODE_PRIVATE)
+        
+        // هشدار دوربین
+        val cbCamera = CheckBox(this)
+        cbCamera.text = "📷 هشدار دوربین سرعت"
+        cbCamera.isChecked = prefs.getBoolean("alert_camera", true)
+        cbCamera.setOnCheckedChangeListener { _, isChecked ->
+            prefs.edit().putBoolean("alert_camera", isChecked).apply()
+        }
+        layout.addView(cbCamera)
+        
+        // هشدار پلیس
+        val cbPolice = CheckBox(this)
+        cbPolice.text = "👮 هشدار پلیس راه"
+        cbPolice.isChecked = prefs.getBoolean("alert_police", true)
+        cbPolice.setOnCheckedChangeListener { _, isChecked ->
+            prefs.edit().putBoolean("alert_police", isChecked).apply()
+        }
+        layout.addView(cbPolice)
+        
+        // هشدار سرعت‌گیر
+        val cbSpeedBump = CheckBox(this)
+        cbSpeedBump.text = "🚨 هشدار سرعت‌گیر"
+        cbSpeedBump.isChecked = prefs.getBoolean("alert_speed_bump", true)
+        cbSpeedBump.setOnCheckedChangeListener { _, isChecked ->
+            prefs.edit().putBoolean("alert_speed_bump", isChecked).apply()
+        }
+        layout.addView(cbSpeedBump)
+        
+        // هشدار تصادف
+        val cbAccident = CheckBox(this)
+        cbAccident.text = "🚨 هشدار تصادف"
+        cbAccident.isChecked = prefs.getBoolean("alert_accident", true)
+        cbAccident.setOnCheckedChangeListener { _, isChecked ->
+            prefs.edit().putBoolean("alert_accident", isChecked).apply()
+        }
+        layout.addView(cbAccident)
+        
+        // هشدار تخطی از سرعت
+        val cbSpeedLimit = CheckBox(this)
+        cbSpeedLimit.text = "⚠️ هشدار تخطی از سرعت"
+        cbSpeedLimit.isChecked = prefs.getBoolean("alert_speed_limit", true)
+        cbSpeedLimit.setOnCheckedChangeListener { _, isChecked ->
+            prefs.edit().putBoolean("alert_speed_limit", isChecked).apply()
+        }
+        layout.addView(cbSpeedLimit)
+        
+        // خط جداکننده
         val divider1 = View(this)
         divider1.setBackgroundColor(0xFFCCCCCC.toInt())
         val dividerParams1 = LinearLayout.LayoutParams(
@@ -884,7 +948,7 @@ class MainActivityFull : AppCompatActivity() {
                     results.take(10).forEach { place ->
                         currentMap?.addMarker(MarkerOptions()
                             .position(LatLng(place.lat, place.lon))
-                            .title("⛽ ${place.display_name}"))
+                            .title("⛽ ${place.displayName}"))
                     }
                     
                     Toast.makeText(this@MainActivityFull, "${results.size} مکان یافت شد", Toast.LENGTH_SHORT).show()
