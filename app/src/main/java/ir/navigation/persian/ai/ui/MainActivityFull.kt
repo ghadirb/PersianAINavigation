@@ -155,9 +155,19 @@ class MainActivityFull : AppCompatActivity() {
                 map.setStyle(Style.Builder().fromUri("https://demotiles.maplibre.org/style.json")) {
                     map.cameraPosition = CameraPosition.Builder().target(LatLng(35.6892, 51.3890)).zoom(12.0).build()
                     
-                    // Add sample markers
-                    map.addMarker(MarkerOptions().position(LatLng(35.7000, 51.4000)).title("📷 دوربین"))
-                    map.addMarker(MarkerOptions().position(LatLng(35.6800, 51.3800)).title("🚨 سرعت‌گیر"))
+                    // Add real cameras
+                    CameraData.getTehranCameras().forEach { camera ->
+                        val icon = when(camera.type) {
+                            CameraType.FIXED_CAMERA -> "📷"
+                            CameraType.AVERAGE_SPEED_CAMERA -> "📹"
+                            CameraType.SPEED_BUMP -> "🚨"
+                            CameraType.TRAFFIC_LIGHT -> "🚦"
+                            CameraType.MOBILE_CAMERA -> "📱"
+                        }
+                        map.addMarker(MarkerOptions()
+                            .position(LatLng(camera.latitude, camera.longitude))
+                            .title("$icon ${camera.speedLimit} km/h"))
+                    }
                     
                     // Map Click Listener - انتخاب مقصد
                     map.addOnMapClickListener { latLng ->

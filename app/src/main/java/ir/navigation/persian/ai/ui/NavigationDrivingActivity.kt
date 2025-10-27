@@ -12,6 +12,8 @@ import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.location.*
 import ir.navigation.persian.ai.api.OSMRAPI
 import ir.navigation.persian.ai.ml.AIRouteLearning
+import ir.navigation.persian.ai.data.CameraData
+import ir.navigation.persian.ai.model.CameraType
 import kotlinx.coroutines.launch
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.geometry.LatLng
@@ -184,9 +186,22 @@ class NavigationDrivingActivity : AppCompatActivity() {
         val speed = location.speed * 3.6 // m/s to km/h
         tvSpeed.text = speed.toInt().toString()
         
-        // Check speed limit
-        val speedLimit = 80 // TODO: Get from road data
-        if (speed > speedLimit) {
+        // Check cameras
+        CameraData.getTehranCameras().forEach { camera ->
+            val dist = FloatArray(1)
+            Location.distanceBetween(location.latitude, location.longitude, camera.latitude, camera.longitude, dist)
+            if (dist[0] < 500) {
+                val msg = when(camera.type) {
+                    CameraType.SPEED_BUMP -> "سرعت‌گیر در ${dist[0].toInt()} متری"
+                    else -> "دوربین در ${dist[0].toInt()} متری - سرعت مجاز ${camera.speedLimit}"
+                }
+                tvInstruction.text = msg
+                if (dist[0] < 200) speak(msg)
+            }
+        }
+        
+        // Check speed
+        if (speed > 80) {
             tvSpeed.setTextColor(0xFFFF0000.toInt())
             speak("سرعت شما بیش از حد مجاز است")
         } else {
