@@ -276,8 +276,16 @@ class MainActivityFull : AppCompatActivity() {
                             "مسیر ${index+1}: $distance کیلومتر، $duration دقیقه"
                         }.toTypedArray()
                         
+                        // نمایش مسیرها روی نقشه
+                        routes.forEachIndexed { index, route ->
+                            // رسم خط مسیر روی نقشه
+                            drawRouteOnMap(route, index)
+                        }
+                        
+                        // نمایش dialog برای انتخاب مسیر
                         AlertDialog.Builder(this@MainActivityFull)
-                            .setTitle("انتخاب مسیر")
+                            .setTitle("انتخاب مسیر برای شروع")
+                            .setMessage("${routes.size} مسیر روی نقشه نمایش داده شد")
                             .setItems(routeNames) { _, which ->
                                 startDrivingMode(destination, name, routes[which])
                             }
@@ -308,13 +316,31 @@ class MainActivityFull : AppCompatActivity() {
     private fun goToMyLocation(mapView: MapView) {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             fusedLocationClient.lastLocation.addOnSuccessListener { loc ->
-                loc?.let {
-                    currentLocation = it
-                    val speed = it.speed * 3.6
-                    speedTextView?.text = "${speed.toInt()} km/h"
-                    mapView.getMapAsync { map -> map.cameraPosition = CameraPosition.Builder().target(LatLng(it.latitude, it.longitude)).zoom(15.0).build() }
-                    Toast.makeText(this, "📍 موقعیت شما", Toast.LENGTH_SHORT).show()
+                if (loc != null) {
+                    currentLocation = loc
+                    val speed = loc.speed * 3.6
+                    speedTextView?.text = "🚗 ${speed.toInt()} km/h"
+                    
+                    mapView.getMapAsync { map ->
+                        // حرکت دوربین به موقعیت فعلی
+                        map.cameraPosition = CameraPosition.Builder()
+                            .target(LatLng(loc.latitude, loc.longitude))
+                            .zoom(16.0)
+                            .build()
+                        
+                        // اضافه کردن marker برای موقعیت فعلی
+                        currentMap?.addMarker(MarkerOptions()
+                            .position(LatLng(loc.latitude, loc.longitude))
+                            .title("📍 موقعیت شما"))
+                    }
+                    
+                    Toast.makeText(this, "📍 موقعیت شما: ${loc.latitude}, ${loc.longitude}", Toast.LENGTH_SHORT).show()
+                    tts?.speak("موقعیت شما یافت شد", TextToSpeech.QUEUE_FLUSH, null, null)
+                } else {
+                    Toast.makeText(this, "موقعیت یافت نشد. لطفا GPS را فعال کنید", Toast.LENGTH_LONG).show()
                 }
+            }.addOnFailureListener { e ->
+                Toast.makeText(this, "خطا در دریافت موقعیت: ${e.message}", Toast.LENGTH_LONG).show()
             }
         } else {
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 1001)
@@ -921,6 +947,37 @@ class MainActivityFull : AppCompatActivity() {
                 .setNegativeButton("انصراف", null)
                 .show()
         } ?: Toast.makeText(this, "ابتدا موقعیت فعلی را مشخص کنید", Toast.LENGTH_SHORT).show()
+    }
+    
+    /**
+     * رسم مسیر روی نقشه
+     */
+    private fun drawRouteOnMap(route: OSMRAPI.RouteInfo, index: Int) {
+        try {
+            // رنگ‌های مختلف برای مسیرهای مختلف
+            val colors = listOf(0xFF2196F3.toInt(), 0xFFF44336.toInt(), 0xFF4CAF50.toInt())
+            val color = colors[index % colors.size]
+            
+            // تبدیل geometry به نقاط
+            val points = mutableListOf<LatLng>()
+            route.geometry.forEach { coord ->
+                points.add(LatLng(coord[1], coord[0])) // [lon, lat] -> LatLng(lat, lon)
+            }
+            
+            // رسم خط روی نقشه (MapLibre از PolylineOptions پشتیبانی نمی‌کند)
+            // به جای آن از marker های کوچک استفاده می‌کنیم
+            points.forEachIndexed { i, point ->
+                if (i % 10 == 0) { // هر 10 نقطه یک marker
+                    currentMap?.addMarker(MarkerOptions()
+                        .position(point)
+                        .title("مسیر ${index + 1}"))
+                }
+            }
+            
+            Toast.makeText(this, "مسیر ${index + 1} روی نقشه نمایش داده شد", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            Toast.makeText(this, "خطا در رسم مسیر: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
     }
     
     /**
